@@ -1,0 +1,6 @@
+node_modules/
+coverage/
+backend/coverage/
+dist/
+backend/dist/
+web-build/

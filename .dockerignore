@@ -1,0 +1,17 @@
+# Docker build sırasında hariç tutulan dosyalar
+node_modules
+npm-debug.log
+yarn-error.log
+.env
+.env.*
+coverage
+dist
+build
+.git
+.gitignore
+.DS_Store
+web-build
+android/app/build
+ios/build
+
+

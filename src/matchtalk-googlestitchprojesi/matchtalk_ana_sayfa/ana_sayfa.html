@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="tr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MatchTalk Home</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts: Inter -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Theme Configuration -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#6467f2", // Indigo-ish
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#101122", // Deep base
+                        "card-dark": "#1E293B", // Lighter slate for cards
+                        "nav-dark": "#0F172A", // Dark slate for nav
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "1rem", 
+                        "lg": "1.5rem", 
+                        "xl": "2rem", 
+                        "full": "9999px"
+                    },
+                    boxShadow: {
+                        "glow": "0 0 15px rgba(100, 103, 242, 0.5)",
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-white flex flex-col h-screen overflow-hidden selection:bg-primary selection:text-white">
+<!-- Top App Bar -->
+<header class="flex items-center justify-between px-6 py-5 bg-background-light dark:bg-background-dark shrink-0 z-10">
+<!-- Left: Logo -->
+<div class="flex items-center gap-2">
+<div class="flex items-center justify-center size-8 rounded-full bg-gradient-to-tr from-primary to-indigo-400">
+<span class="material-symbols-outlined text-white text-lg">graphic_eq</span>
+</div>
+<p class="text-[20px] font-bold tracking-tight text-slate-900 dark:text-white">MatchTalk</p>
+</div>
+<!-- Right: Actions -->
+<div class="flex items-center gap-4">
+<button class="relative group p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+<span class="material-symbols-outlined text-slate-600 dark:text-[#9293c9] text-[24px]" style="font-variation-settings: 'FILL' 0, 'wght' 400;">notifications</span>
+<!-- Badge -->
+<span class="absolute top-2 right-2 size-2.5 bg-red-500 rounded-full border-2 border-background-light dark:border-background-dark"></span>
+</button>
+<div class="relative cursor-pointer">
+<div class="size-10 rounded-full bg-slate-200 dark:bg-slate-700 p-[2px] ring-2 ring-transparent hover:ring-primary/50 transition-all overflow-hidden">
+<img class="w-full h-full object-cover rounded-full" data-alt="User profile portrait of a smiling woman" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB_3bPnryvVsIl6YKdUmxI_Zy5Q6QksNe2QmHiNwfLnj0kwWX77kRRG5nv6ttl7S1swxMTcGpkg-VL2-ETm7iOLdimKLB9oovqd2o7NjvbaVF_r1myLt5sGnU-IdbYrbWK8oMdrBMLXTx18I0M_toAn9ECIW3wZ-VYiEDNZjdAnMBjqxtJbz6ebNBgNlyrxfkmjRZQOCTiHjFrviEVCT70STDiJWHnoUBlg3hhTxnJor05zBaoeQ-QvjXMQFBDheyfqmqkoRzUONKs"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Content Area: Active Rooms List -->
+<main class="flex-1 overflow-y-auto px-4 pb-32 pt-2 scrollbar-hide">
+<div class="flex items-center justify-between mb-4 px-2">
+<h2 class="text-lg font-bold text-slate-800 dark:text-white">Aktif Odalar</h2>
+<button class="text-sm text-primary font-medium hover:text-indigo-400">Tümünü Gör</button>
+</div>
+<!-- Room Card 1 -->
+<div class="group relative bg-white dark:bg-card-dark rounded-xl p-5 mb-4 shadow-sm border border-slate-100 dark:border-slate-800 transition-all hover:border-primary/30">
+<div class="flex justify-between items-start mb-4">
+<div>
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white tracking-tight">Chill Vibes &amp; Music</h3>
+<p class="text-sm text-slate-500 dark:text-[#9293c9] mt-0.5">Müzik ve Sohbet</p>
+</div>
+<!-- Timer -->
+<div class="flex items-center gap-1.5 bg-primary/10 dark:bg-[#6467f2]/10 px-3 py-1.5 rounded-full">
+<span class="material-symbols-outlined text-primary text-[18px]" style="font-variation-settings: 'FILL' 1;">timer</span>
+<span class="text-primary font-bold text-sm tabular-nums">04:32</span>
+</div>
+</div>
+<!-- Avatars -->
+<div class="mb-5 flex items-center justify-between">
+<div class="flex -space-x-3 rtl:space-x-reverse overflow-hidden p-1">
+<img class="inline-block size-10 rounded-full ring-2 ring-white dark:ring-card-dark object-cover" data-alt="Portrait of a young man participant" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDu6zOaaxUobRi1g4a-JlhmJkIpKT0QYnEaocIDgVDDY6Htp6O38SYW2UZc0ZNX04mCJwU-2COZz1o6c32MuhDXM350B7-o0DQNS8rm8egdUqrUjf5SX4PAIJ9FVV6dejM5qpNwfKvEkEh2zIJX2xG4M06KiGQUuNQtgmO51f2gKXqGXxJq2BHRuJFAoC2sdef30KzfBOuh5T7pUy3X8NMf_ecVcs5AhkBV_LyFYdZ1DG5c1FWZuEU5Cj2AMNTNbD-GomClHwqSQrY"/>
+<img class="inline-block size-10 rounded-full ring-2 ring-white dark:ring-card-dark object-cover" data-alt="Portrait of a smiling woman participant" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAmid-qjDmREV0Qsvqr1uz92JX0eT9AO1Te5UyfPnRCwVJbSs2_xoWjzo47P4KuI9gAOQ5HcNu2828Ln7MpOLVoScYnlwpdVAeXDsEMm7ASiRUKn2BHBMXmrJfEemEUHLdJ6uKgyanbqHf6eaZgZVpTLSOphM_QZdM4XnSkcWhTivAZSQkRwe67wFquAwV3Por3746dC2__bA82xS51q7juU3q73dXQbDfIOs0Pc8lwpbogUe79KhnA-PUxSvzJIckhe9DXJD2TP-M"/>
+<img class="inline-block size-10 rounded-full ring-2 ring-white dark:ring-card-dark object-cover" data-alt="Portrait of a man with glasses participant" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAbtebrlkGDixHAGzKtrrZbyRMVKrHIklH9n0vZvkQ2WwK8sOeed1whtvACrJs5s5grbFYUIRSWJ5Y0Xr-1jQfEfV4sOM9uxlYbvwUBfAMGb_d-63rgE6rK7vSFF-DOshUmY823WkAW-0htEk1LxnZWXg9wH34AqP6alWao0bZZzNO4xOL0c2U3RsEIEV3EIefR6sDb7TGzlgRYJSACToHxZrsvDFBGuhH3SZuTaG9xLhEu070euQzqZ2Iq2JjNkYmyq1MJ-OdB-5s"/>
+<img class="inline-block size-10 rounded-full ring-2 ring-white dark:ring-card-dark object-cover" data-alt="Portrait of a smiling woman participant" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAs07e8m71jFVXhXc1Llya3XAjPrxDFSAnH4EJl8RmrILZpdP7lzJUIo2-NxfY7Kc7Ppr046grqQ200u6daJo0vMvOi3VnfJMyECOFiDVdITnN5IhhaSVBN7mQCcxZG_63J3djRKm1EGmOKKbftHKR2MPYSrbeUOOulxsKiZfV49W7stg9hgw3K38AcHwDfrwuihImg-MPPcPc2Ocp5l8ADW4ecUP35-E6pqEE0edNvRGSDmYts7hDAOVA_OkxMh66dqj29TpcBuL4"/>
+<div class="flex items-center justify-center size-10 rounded-full ring-2 ring-white dark:ring-card-dark bg-slate-100 dark:bg-slate-700 text-xs font-bold text-slate-600 dark:text-slate-300">
+                        +2
+                    </div>
+</div>
+</div>
+<!-- Bottom Stats -->
+<div class="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-700/50">
+<!-- Participants Count -->
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-slate-400 dark:text-slate-500 text-[20px]">group</span>
+<span class="text-sm font-semibold text-slate-600 dark:text-slate-300">6/8</span>
+</div>
+<!-- Gender Bar -->
+<div class="flex flex-col gap-1 w-24">
+<div class="flex h-2 w-full overflow-hidden rounded-full bg-pink-500">
+<!-- Male portion (Blue) -->
+<div class="h-full bg-blue-500" style="width: 60%"></div>
+</div>
+</div>
+<!-- Action -->
+<button class="bg-slate-100 dark:bg-slate-800 hover:bg-primary hover:text-white dark:hover:bg-primary text-slate-900 dark:text-white text-sm font-semibold py-2 px-5 rounded-full transition-all duration-300">
+                    Katıl
+                </button>
+</div>
+</div>
+<!-- Room Card 2 -->
+<div class="group relative bg-white dark:bg-card-dark rounded-xl p-5 mb-4 shadow-sm border border-slate-100 dark:border-slate-800 transition-all hover:border-primary/30">
+<div class="flex justify-between items-start mb-4">
+<div>
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white tracking-tight">Gece Sohbetleri 🌙</h3>
+<p class="text-sm text-slate-500 dark:text-[#9293c9] mt-0.5">Genel Sohbet</p>
+</div>
+<!-- Timer -->
+<div class="flex items-center gap-1.5 bg-primary/10 dark:bg-[#6467f2]/10 px-3 py-1.5 rounded-full">
+<span class="material-symbols-outlined text-primary text-[18px]" style="font-variation-settings: 'FILL' 1;">timer</span>
+<span class="text-primary font-bold text-sm tabular-nums">09:15</span>
+</div>
+</div>
+<!-- Avatars -->
+<div class="mb-5 flex items-center justify-between">
+<div class="flex -space-x-3 rtl:space-x-reverse overflow-hidden p-1">
+<img class="inline-block size-10 rounded-full ring-2 ring-white dark:ring-card-dark object-cover" data-alt="Headshot of a serious man" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBc-1QbciKAA4H8k5s_E8W2Vdk0MB3AE03q9pTCIsDu5LZxaH4zzCGEjntcoTFm3E_EXxkWKeuEDVQkXdtc9PB-IUS6kuKwGKwqRbhxk-JWBfpZckxpwT97gvr_u10oBt6eGdYcjcvzxxjIyyv97g9g1U1xbUbfh2WfoGl0HokE1s_SfaTZmNCZWwWvzPN53GmyKTMJuVg63ZQhWxCVPS-PHP6U9VhEbBl-mGZxVls0A_XVdw4N0pvr2jw8DFgH2Kqa6T74EMP2RyE"/>
+<img class="inline-block size-10 rounded-full ring-2 ring-white dark:ring-card-dark object-cover" data-alt="Headshot of a woman laughing" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAFNTVEEmP5Y5kw9HsCuCfSanhdW4ijSiP6m_1FXnAWqq33JJ86VjxS7YZ4JagNgWea6skVNT2Tyvv_kDdvs1HLlGrR4YqgDi_wnyuVQniUSsgdYqoJYgWz2HfrGaCc1UxyyC09zXOdh10jw0aVyc0wrKEc_GDywDdO7w0Mj_5lFgnXWuEWGNFgnEhOzQL_mjiDXedLXjwQR7PxBeUgIFz-kQCKUtYMs14DbliCy_herol2PLX9dVHPZErC2vTmWRFs2vhXjuasGWU"/>
+<img class="inline-block size-10 rounded-full ring-2 ring-white dark:ring-card-dark object-cover" data-alt="Headshot of a smiling man with a white background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAY7sujveCXRR_smQJj_jRpbMeUyA6AYaLhhLVyuL9J1Qk5611FHvDl8oOSWVM1YRPeBILtRp9VpQ18zEc1BEF9oaseovCIek2LdoBxUWj0pDW9pC9qaQtkyU-OQRS5hTIRMZdzpQeIxVUHM8rJ6LwOSjg3_48fFt4knzjCQP4GWhHUBIrGKSphJDjHPovhWXTg140005y7PQY9rrOA5MIpU6I4c7hJSbj7KmbHpnoDyq7VLMT1lxAcS6xej6DI9ll-InDt07UKB7w"/>
+<img class="inline-block size-10 rounded-full ring-2 ring-white dark:ring-card-dark object-cover" data-alt="Headshot of a woman with short hair" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA_V2nkWx1cs_NNgqkyzA81LneNylLFRa1ECJocgH1VEKxIeH6x6yCesjh0IHWJwIwKB7F09uyKJRlDcPf4o3Ve4Aqz6HJJmUwRJ39zaArJIIgcgkL_xZZH1eAF71fn32MnxcwRNAWasyyJVsWRVLdtqeIkP6nLvXg3Wy29IGFN8-dHQNjj2U-Ue55dIIpSnViOyftbkLYSVmqT4uwltlE6V95QSwtA1hvc2FW9XKvhYFSRk8kLmcxnZq99z15NqLTc3gl3_yzYP_0"/>
+</div>
+</div>
+<!-- Bottom Stats -->
+<div class="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-700/50">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-slate-400 dark:text-slate-500 text-[20px]">group</span>
+<span class="text-sm font-semibold text-slate-600 dark:text-slate-300">4/8</span>
+</div>
+<div class="flex flex-col gap-1 w-24">
+<div class="flex h-2 w-full overflow-hidden rounded-full bg-pink-500">
+<div class="h-full bg-blue-500" style="width: 50%"></div>
+</div>
+</div>
+<button class="bg-slate-100 dark:bg-slate-800 hover:bg-primary hover:text-white dark:hover:bg-primary text-slate-900 dark:text-white text-sm font-semibold py-2 px-5 rounded-full transition-all duration-300">
+                    Katıl
+                </button>
+</div>
+</div>
+<!-- Illustration of more content potentially loading -->
+<div class="flex justify-center py-4">
+<div class="h-1 w-16 bg-slate-200 dark:bg-slate-800 rounded-full"></div>
+</div>
+</main>
+<!-- Floating Action Button Area (Sticky above Nav) -->
+<div class="absolute bottom-[90px] left-0 w-full px-6 flex justify-center pointer-events-none z-30">
+<button class="pointer-events-auto w-full max-w-sm h-16 bg-primary hover:bg-indigo-500 text-white rounded-full shadow-glow flex items-center justify-center gap-3 transform transition active:scale-95 border border-white/10 group backdrop-blur-sm">
+<span class="material-symbols-outlined text-[28px] group-hover:rotate-90 transition-transform duration-300">add_circle</span>
+<span class="text-[18px] font-semibold tracking-wide">Yeni Odaya Katıl</span>
+</button>
+</div>
+<!-- Bottom Navigation Bar -->
+<nav class="bg-white dark:bg-nav-dark border-t border-slate-200 dark:border-slate-800 h-[84px] shrink-0 z-40 pb-5 px-6">
+<div class="flex items-center justify-between h-full max-w-sm mx-auto">
+<!-- Home (Active) -->
+<button class="flex flex-col items-center justify-center gap-1 w-12 text-primary">
+<span class="material-symbols-outlined text-[28px]" style="font-variation-settings: 'FILL' 1;">home</span>
+<!-- Indicator Dot -->
+<span class="size-1 bg-primary rounded-full"></span>
+</button>
+<!-- Friends -->
+<button class="flex flex-col items-center justify-center gap-1 w-12 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
+<span class="material-symbols-outlined text-[28px]">group</span>
+</button>
+<!-- Profile -->
+<button class="flex flex-col items-center justify-center gap-1 w-12 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
+<span class="material-symbols-outlined text-[28px]">person</span>
+</button>
+<!-- Settings -->
+<button class="flex flex-col items-center justify-center gap-1 w-12 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
+<span class="material-symbols-outlined text-[28px]">settings</span>
+</button>
+</div>
+</nav>
+<!-- Overlay Gradient for Content Fade -->
+<div class="fixed bottom-[84px] left-0 w-full h-12 bg-gradient-to-t from-background-light dark:from-background-dark to-transparent pointer-events-none z-20"></div>
+</body></html>
