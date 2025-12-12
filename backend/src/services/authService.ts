@@ -1,5 +1,5 @@
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import jwt, {Secret} from 'jsonwebtoken';
 import {prisma} from '../lib/prisma';
 import {HttpError} from '../errors';
 import {config} from '../config';
@@ -87,9 +87,13 @@ export class AuthService {
    * JWT token oluşturma
    */
   private generateToken(userId: string): string {
-    return jwt.sign({userId}, config.jwtSecret, {
-      expiresIn: config.jwtExpiresIn,
-    });
+    return jwt.sign(
+      {userId},
+      config.jwtSecret as any,
+      {
+        expiresIn: config.jwtExpiresIn as any,
+      },
+    ) as string;
   }
 
   /**

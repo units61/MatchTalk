@@ -20,8 +20,8 @@ interface HomeScreenProps {
 const HomeScreen: React.FC<HomeScreenProps> = ({onTabChange}) => {
   const [activeTab, setActiveTab] = useState<'home' | 'friends' | 'profile' | 'settings'>('home');
   const {rooms, loading, fetchRooms, joinRoom, updateRoom} = useRoomsStore();
-  const {user} = useAuthStore();
-  const {on, off} = useWebSocket();
+  const {user, isAuthenticated} = useAuthStore();
+  const {on, off, isConnected} = useWebSocket();
 
   useEffect(() => {
     fetchRooms();
@@ -29,6 +29,10 @@ const HomeScreen: React.FC<HomeScreenProps> = ({onTabChange}) => {
 
   // Real-time room updates
   useEffect(() => {
+    if (!isAuthenticated || !isConnected) {
+      return;
+    }
+
     // Listen for room updates
     const handleRoomUpdate = (data: {room?: any; joinedUser?: {id: string}; leftUser?: {id: string}}) => {
       if (data.room) {
@@ -58,7 +62,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({onTabChange}) => {
       off('room-created', handleRoomCreated);
       off('room-closed', handleRoomClosed);
     };
-  }, [on, off, fetchRooms, updateRoom]);
+  }, [isAuthenticated, isConnected, on, off, fetchRooms, updateRoom]);
 
   const handleTabChange = (tab: 'home' | 'friends' | 'profile' | 'settings') => {
     setActiveTab(tab);

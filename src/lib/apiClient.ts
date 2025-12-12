@@ -1,5 +1,5 @@
 import axios, {AxiosInstance, AxiosError, InternalAxiosRequestConfig} from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import {storage} from './storage';
 
 const API_BASE_URL =
   (typeof process !== 'undefined' && process.env?.API_BASE_URL) || 'http://localhost:4000';
@@ -29,7 +29,7 @@ class ApiClient {
     // Request interceptor - Token ekleme
     this.client.interceptors.request.use(
       async (config: InternalAxiosRequestConfig) => {
-        const token = await AsyncStorage.getItem('auth_token');
+        const token = await storage.getItem('auth_token');
         if (token && config.headers) {
           config.headers.Authorization = `Bearer ${token}`;
         }
@@ -52,7 +52,7 @@ class ApiClient {
           
           if (status === 401) {
             // Unauthorized - Clear token and redirect to login
-            await AsyncStorage.removeItem('auth_token');
+            await storage.removeItem('auth_token');
             // You can dispatch a logout action here if using a global state
           }
 
@@ -129,14 +129,14 @@ class ApiClient {
 
   async setToken(token: string | null) {
     if (token) {
-      await AsyncStorage.setItem('auth_token', token);
+      await storage.setItem('auth_token', token);
     } else {
-      await AsyncStorage.removeItem('auth_token');
+      await storage.removeItem('auth_token');
     }
   }
 
   async getToken(): Promise<string | null> {
-    return await AsyncStorage.getItem('auth_token');
+    return await storage.getItem('auth_token');
   }
 }
 

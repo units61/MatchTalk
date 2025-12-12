@@ -5,6 +5,15 @@ import {emitToUser} from '../websocket/server';
 import {Server as SocketIOServer} from 'socket.io';
 
 export class MatchingService {
+  private io: SocketIOServer | null = null;
+
+  /**
+   * WebSocket server'ı ayarla (match-found eventleri için)
+   */
+  setIO(io: SocketIOServer) {
+    this.io = io;
+  }
+
   /**
    * Eşleştirme kuyruğuna katılma
    */

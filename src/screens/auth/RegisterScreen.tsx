@@ -54,7 +54,9 @@ const RegisterScreen: React.FC<Props> = ({onSwitch, onRegisterSuccess}) => {
       });
       onRegisterSuccess?.();
     } catch (err) {
-      Alert.alert('Kayıt Başarısız', error || 'Bir hata oluştu');
+      const message =
+        err instanceof Error ? err.message : error || 'Bir hata oluştu';
+      Alert.alert('Kayıt Başarısız', message);
     }
   };
 
@@ -226,6 +228,8 @@ const RegisterScreen: React.FC<Props> = ({onSwitch, onRegisterSuccess}) => {
             {loading ? 'Kayıt yapılıyor...' : 'Kayıt Ol'}
           </Text>
         </Pressable>
+        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+        {error ? <Text style={styles.errorText}>{error}</Text> : null}
         <Pressable onPress={onSwitch} style={styles.loginLink}>
           <Text style={styles.loginLinkText}>
             Zaten hesabın var mı? Giriş yap
@@ -399,6 +403,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#fff',
+  },
+  errorText: {
+    marginTop: spacing.md,
+    color: colors.error || '#d32f2f',
+    textAlign: 'center',
+    fontSize: 14,
+    fontWeight: '600',
   },
   loginLink: {
     alignItems: 'center',

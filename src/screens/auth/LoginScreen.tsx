@@ -28,7 +28,9 @@ const LoginScreen: React.FC<Props> = ({onSwitch, onLogin}) => {
       await login({email: email.trim(), password});
       onLogin?.();
     } catch (err) {
-      Alert.alert('Giriş Başarısız', error || 'Bir hata oluştu');
+      const message =
+        err instanceof Error ? err.message : error || 'Bir hata oluştu';
+      Alert.alert('Giriş Başarısız', message);
     }
   };
 
@@ -95,13 +97,6 @@ const LoginScreen: React.FC<Props> = ({onSwitch, onLogin}) => {
             </View>
           </View>
 
-          {/* Forgot Password */}
-          <View style={styles.forgotPassword}>
-            <Pressable>
-              <Text style={styles.forgotPasswordText}>Şifremi Unuttum?</Text>
-            </Pressable>
-          </View>
-
           {/* Login Button */}
           <Pressable
             style={[styles.loginButton, loading && styles.loginButtonDisabled]}
@@ -113,6 +108,10 @@ const LoginScreen: React.FC<Props> = ({onSwitch, onLogin}) => {
             {!loading && <Icon name="arrow_forward" style={styles.buttonIcon} />}
           </Pressable>
         </View>
+
+        {error ? (
+          <Text style={styles.errorText}>{error}</Text>
+        ) : null}
 
         {/* Footer / Sign Up Link */}
         <View style={styles.footer}>
@@ -324,6 +323,13 @@ const styles = StyleSheet.create({
   },
   loginButtonDisabled: {
     opacity: 0.6,
+  },
+  errorText: {
+    marginTop: spacing.md,
+    color: colors.error || '#d32f2f',
+    textAlign: 'center',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });
 

@@ -2,6 +2,8 @@ import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
 import morgan from 'morgan';
+import path from 'path';
+import fs from 'fs';
 import {authRouter} from './routes/auth';
 import {healthRouter} from './routes/health';
 import {errorHandler} from './middleware/error';
@@ -57,6 +59,15 @@ export const createApp = () => {
   app.use('/matching', matchingRouter);
   app.use('/invites', invitesRouter);
   app.use('/stats', statsRouter);
+
+  // Frontend statik servis (prod build kopyası varsa)
+  const clientBuildPath = path.join(__dirname, '..', '..', 'frontend-dist');
+  if (fs.existsSync(clientBuildPath)) {
+    app.use(express.static(clientBuildPath));
+    app.get('*', (_req, res) => {
+      res.sendFile(path.join(clientBuildPath, 'index.html'));
+    });
+  }
 
   app.use(errorHandler);
 

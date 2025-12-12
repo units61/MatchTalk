@@ -65,55 +65,56 @@ class WebSocketClient {
   }
 
   // Room events
-  joinRoom(roomId: string) {
-    if (!this.socket) {
-      throw new Error('Socket not connected');
+  private ensureConnected(): Socket | null {
+    if (!this.socket || !this.socket.connected) {
+      console.warn('Socket not connected');
+      return null;
     }
-    this.socket.emit('join-room', {roomId});
+    return this.socket;
+  }
+
+  joinRoom(roomId: string) {
+    const socket = this.ensureConnected();
+    if (!socket) return;
+    socket.emit('join-room', {roomId});
   }
 
   leaveRoom(roomId: string) {
-    if (!this.socket) {
-      throw new Error('Socket not connected');
-    }
-    this.socket.emit('leave-room', {roomId});
+    const socket = this.ensureConnected();
+    if (!socket) return;
+    socket.emit('leave-room', {roomId});
   }
 
   voteExtension(roomId: string, vote: 'yes' | 'no') {
-    if (!this.socket) {
-      throw new Error('Socket not connected');
-    }
-    this.socket.emit('vote-extension', {roomId, vote});
+    const socket = this.ensureConnected();
+    if (!socket) return;
+    socket.emit('vote-extension', {roomId, vote});
   }
 
   // Matching events
   joinMatching() {
-    if (!this.socket) {
-      throw new Error('Socket not connected');
-    }
-    this.socket.emit('matching-join');
+    const socket = this.ensureConnected();
+    if (!socket) return;
+    socket.emit('matching-join');
   }
 
   leaveMatching() {
-    if (!this.socket) {
-      throw new Error('Socket not connected');
-    }
-    this.socket.emit('matching-leave');
+    const socket = this.ensureConnected();
+    if (!socket) return;
+    socket.emit('matching-leave');
   }
 
   getMatchingStatus() {
-    if (!this.socket) {
-      throw new Error('Socket not connected');
-    }
-    this.socket.emit('matching-status');
+    const socket = this.ensureConnected();
+    if (!socket) return;
+    socket.emit('matching-status');
   }
 
   // Event listeners
   on(event: string, callback: (...args: any[]) => void) {
-    if (!this.socket) {
-      throw new Error('Socket not connected');
-    }
-    this.socket.on(event, callback);
+    const socket = this.ensureConnected();
+    if (!socket) return;
+    socket.on(event, callback);
   }
 
   off(event: string, callback?: (...args: any[]) => void) {
