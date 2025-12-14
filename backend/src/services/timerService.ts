@@ -2,6 +2,7 @@ import {prisma} from '../lib/prisma';
 import {emitToRoom} from '../websocket/server';
 import {Server as SocketIOServer} from 'socket.io';
 import {badgeService, XP_REWARDS} from './badgeService';
+import {logger} from '../logger';
 
 interface TimerJob {
   roomId: string;
