@@ -262,10 +262,17 @@ const styles = StyleSheet.create({
   indicatorActive: {
     width: 32,
     backgroundColor: colors.primary,
-    shadowColor: colors.primary,
-    shadowOffset: {width: 0, height: 0},
-    shadowOpacity: 0.5,
-    shadowRadius: 10,
+    ...Platform.select({
+      web: {
+        boxShadow: `0 0 10px ${colors.primary}80`,
+      },
+      default: {
+        shadowColor: colors.primary,
+        shadowOffset: {width: 0, height: 0},
+        shadowOpacity: 0.5,
+        shadowRadius: 10,
+      },
+    }),
   },
   nextButton: {
     width: '100%',
@@ -276,10 +283,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.sm,
-    shadowColor: colors.primary,
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
+    ...Platform.select({
+      web: {
+        boxShadow: `0 4px 8px ${colors.primary}33`,
+      },
+      default: {
+        shadowColor: colors.primary,
+        shadowOffset: {width: 0, height: 4},
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+      },
+    }),
   },
   nextButtonText: {
     fontSize: 16,
@@ -313,9 +327,12 @@ const pageStyles = StyleSheet.create({
     ...Platform.select({
       web: {
         filter: 'blur(48px)',
+        transform: 'scale(0.75)',
+      },
+      default: {
+        transform: [{scale: 0.75}],
       },
     }),
-    transform: [{scale: 0.75}],
   },
   illustration: {
     width: '100%',
@@ -335,10 +352,17 @@ const pageStyles = StyleSheet.create({
     backgroundColor: '#fff',
     padding: spacing.sm,
     borderRadius: radius.full,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
+    ...Platform.select({
+      web: {
+        boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+      },
+      default: {
+        shadowColor: '#000',
+        shadowOffset: {width: 0, height: 4},
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+      },
+    }),
   },
   micIcon2: {
     position: 'absolute',
@@ -347,10 +371,17 @@ const pageStyles = StyleSheet.create({
     backgroundColor: '#fff',
     padding: spacing.sm,
     borderRadius: radius.full,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
+    ...Platform.select({
+      web: {
+        boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+      },
+      default: {
+        shadowColor: '#000',
+        shadowOffset: {width: 0, height: 4},
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+      },
+    }),
   },
   micIconStyle: {
     fontSize: 20,
@@ -413,10 +444,17 @@ const pageStyles2 = StyleSheet.create({
     left: '50%',
     marginTop: -48,
     marginLeft: -48,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
+    ...Platform.select({
+      web: {
+        boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+      },
+      default: {
+        shadowColor: '#000',
+        shadowOffset: {width: 0, height: 4},
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+      },
+    }),
   },
   centralIcon: {
     fontSize: 36,
@@ -430,10 +468,17 @@ const pageStyles2 = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#fff',
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    ...Platform.select({
+      web: {
+        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+      },
+      default: {
+        shadowColor: '#000',
+        shadowOffset: {width: 0, height: 2},
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+    }),
   },
   avatarImage: {
     width: '100%',
@@ -464,9 +509,12 @@ const pageStyles3 = StyleSheet.create({
     ...Platform.select({
       web: {
         filter: 'blur(32px)',
+        transform: 'scale(1.1)',
+      },
+      default: {
+        transform: [{scale: 1.1}],
       },
     }),
-    transform: [{scale: 1.1}],
   },
   timerCircle: {
     width: 256,
@@ -478,10 +526,17 @@ const pageStyles3 = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.1,
-    shadowRadius: 16,
+    ...Platform.select({
+      web: {
+        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)',
+      },
+      default: {
+        shadowColor: '#000',
+        shadowOffset: {width: 0, height: 4},
+        shadowOpacity: 0.1,
+        shadowRadius: 16,
+      },
+    }),
   },
   timerContent: {
     alignItems: 'center',

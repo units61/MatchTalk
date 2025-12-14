@@ -40,6 +40,26 @@ export const useRoomsStore = create<RoomsState>((set, get) => ({
   createRoom: async (input: CreateRoomInput) => {
     try {
       set({loading: true, error: null});
+      
+      // Eğer kullanıcı zaten bir odadaysa, önce o odadan ayrıl
+      const state = get();
+      if (state.currentRoom) {
+        console.log(`[RoomsStore] Kullanıcı zaten ${state.currentRoom.id} odasında. Önce odadan ayrılıyor...`);
+        try {
+          await roomsApi.leaveRoom(state.currentRoom.id);
+          console.log(`[RoomsStore] Başarıyla ${state.currentRoom.id} odasından ayrıldı`);
+          // State'i güncelle
+          set((prevState) => ({
+            rooms: prevState.rooms.filter((r) => r.id !== state.currentRoom!.id),
+            currentRoom: null,
+          }));
+        } catch (leaveError) {
+          console.warn(`[RoomsStore] Odadan ayrılırken hata oluştu:`, leaveError);
+          // Odadan ayrılma hatası kritik değil, yeni oda oluşturmayı denemeye devam et
+        }
+      }
+      
+      // Yeni oda oluştur
       const room = await roomsApi.createRoom(input);
       set((state) => ({
         rooms: [room, ...state.rooms],
@@ -47,12 +67,14 @@ export const useRoomsStore = create<RoomsState>((set, get) => ({
         loading: false,
         error: null,
       }));
+      console.log(`[RoomsStore] Yeni oda oluşturuldu: ${room.id}`);
       return room;
     } catch (error) {
       set({
         loading: false,
         error: error instanceof Error ? error.message : 'Oda oluşturulamadı',
       });
+      console.error(`[RoomsStore] Oda oluşturma hatası:`, error);
       throw error;
     }
   },

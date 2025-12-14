@@ -1,56 +1,36 @@
-###
-# Full-stack Docker image (frontend build + backend build)
-# - Frontend entry: ./src/web/index.jsx -> output: ./dist/
-# - Backend entry:  ./backend/src/index.ts -> output: ./backend/dist/index.js
-# Prod start: node backend/dist/index.js (expects env vars at runtime)
-###
+# MatchTalk Dockerfile şablonu
+# Bu dosya, Dockerfile silinirse hızlıca geri yüklemek için tutulur.
+# İçeriği ihtiyacınıza göre düzenleyin ve ops/restore-dockerfile.ps1
+# çalıştırıldığında kökteki Dockerfile'ı bu şablondan üretir.
 
-# ---------- Frontend deps + build ----------
-FROM node:18-alpine AS frontend-deps
-WORKDIR /app/frontend
-COPY package*.json ./
-COPY babel.config.js webpack.config.js tsconfig.json ./
-RUN npm ci --ignore-scripts
+# Örnek backend build (Node 18 + TypeScript için)
+# Gerektiğinde portu, build komutlarını ve yolları güncelleyin.
+FROM node:18-alpine AS deps
+WORKDIR /app
 
-FROM node:18-alpine AS frontend-build
-WORKDIR /app/frontend
-COPY --from=frontend-deps /app/frontend/node_modules ./node_modules
-COPY package*.json ./
-COPY babel.config.js webpack.config.js tsconfig.json ./
-COPY public ./public
-COPY src ./src
-COPY App.tsx ./App.tsx
-RUN npm run build
-
-# ---------- Backend deps + build ----------
-FROM node:18-alpine AS backend-deps
-WORKDIR /app/backend
+# Paket dosyalarını kopyalayın (backend/package.json mevcut olmalı)
 COPY backend/package*.json ./
 RUN npm ci --ignore-scripts
 
-FROM node:18-alpine AS backend-build
-WORKDIR /app/backend
-COPY --from=backend-deps /app/backend/node_modules ./node_modules
+FROM node:18-alpine AS builder
+WORKDIR /app
 COPY backend ./
+RUN npm install
 RUN npm run build
 
-# ---------- Runtime ----------
-FROM node:18-alpine AS runtime
+FROM node:18-alpine
 WORKDIR /app
-ENV NODE_ENV=production
+COPY --from=builder /app/dist ./dist
+COPY --from=deps /app/node_modules ./node_modules
 
-# Backend runtime files
-COPY --from=backend-build /app/backend/dist ./backend/dist
-COPY --from=backend-build /app/backend/node_modules ./backend/node_modules
-COPY --from=backend-build /app/backend/package*.json ./backend/
+# Uygulama portu (gerekirse değiştirin)
+EXPOSE 3000
 
-# Frontend static bundle
-COPY --from=frontend-build /app/frontend/dist ./frontend-dist
+# Healthcheck
+HEALTHCHECK --interval=30s --timeout=3s \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1
 
-# Expose API port
-EXPOSE 4000
-
-# Start backend (expects env vars provided at runtime)
-CMD ["node", "backend/dist/index.js"]
+# Başlatma komutu (dist/index.js mevcut olduğundan emin olun)
+CMD ["node", "dist/index.js"]
 
 

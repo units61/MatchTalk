@@ -1,6 +1,5 @@
 import {Router, Response} from 'express';
 import {statsService} from '../services/statsService';
-import {HttpError} from '../errors';
 import {authMiddleware, AuthRequest} from '../middleware/auth';
 
 const router = Router();

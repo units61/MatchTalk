@@ -1,7 +1,7 @@
-import {Socket} from 'socket.io';
-import {Server as SocketIOServer} from 'socket.io';
+import {Socket, Server as SocketIOServer} from 'socket.io';
 import {matchingService} from '../../services/matchingService';
 import {emitToUser} from '../server';
+import {logger} from '../../logger';
 
 export const matchingHandlers = (
   socket: Socket,
@@ -13,6 +13,8 @@ export const matchingHandlers = (
    */
   socket.on('matching-join', async () => {
     try {
+      logger.info('WebSocket matching-join', {userId, socketId: socket.id});
+      
       const result = await matchingService.joinQueue(userId);
 
       // Kullanıcıya bildir
@@ -34,6 +36,11 @@ export const matchingHandlers = (
         });
       }
     } catch (error) {
+      logger.error('WebSocket matching-join error', {
+        userId,
+        socketId: socket.id,
+        error: error instanceof Error ? error.message : String(error),
+      });
       socket.emit('matching-error', {
         error: error instanceof Error ? error.message : 'Kuyruğa katılamadı',
       });
@@ -45,9 +52,16 @@ export const matchingHandlers = (
    */
   socket.on('matching-leave', async () => {
     try {
+      logger.info('WebSocket matching-leave', {userId, socketId: socket.id});
+      
       await matchingService.leaveQueue(userId);
       socket.emit('matching-left', {success: true});
     } catch (error) {
+      logger.error('WebSocket matching-leave error', {
+        userId,
+        socketId: socket.id,
+        error: error instanceof Error ? error.message : String(error),
+      });
       socket.emit('matching-error', {
         error: error instanceof Error ? error.message : 'Kuyruktan ayrılamadı',
       });
@@ -59,6 +73,8 @@ export const matchingHandlers = (
    */
   socket.on('matching-status', async () => {
     try {
+      logger.debug('WebSocket matching-status', {userId, socketId: socket.id});
+      
       const status = await matchingService.getQueueStatus(userId);
       const queueUsers = await matchingService.getQueueUsers();
 
@@ -67,6 +83,11 @@ export const matchingHandlers = (
         users: queueUsers,
       });
     } catch (error) {
+      logger.error('WebSocket matching-status error', {
+        userId,
+        socketId: socket.id,
+        error: error instanceof Error ? error.message : String(error),
+      });
       socket.emit('matching-error', {
         error: error instanceof Error ? error.message : 'Durum alınamadı',
       });

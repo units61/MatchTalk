@@ -307,7 +307,11 @@ const styles = StyleSheet.create({
     height: 64,
     borderRadius: radius.xl,
     backgroundColor: 'rgba(99, 102, 241, 0.2)',
-    background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+    ...Platform.select({
+      web: {
+        backgroundImage: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+      },
+    }),
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -421,7 +425,7 @@ const styles = StyleSheet.create({
     paddingTop: spacing.xl,
     ...Platform.select({
       web: {
-        background: 'linear-gradient(to top, #0F172A, transparent)',
+        backgroundImage: 'linear-gradient(to top, #0F172A, transparent)',
       },
     }),
   },

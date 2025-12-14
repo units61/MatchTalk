@@ -16,6 +16,10 @@ model User {
   name          String
   gender        String
   hashedPassword String
+  avatar        String?
+  xp            Int      @default(0)
+  level         Int      @default(1)
+  role          String   @default("user") // user, admin, moderator
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   roomParticipants RoomParticipant[]
@@ -24,8 +28,13 @@ model User {
   invitesSent   Invite[] @relation("Inviter")
   invitesReceived Invite[] @relation("Invitee")
   matchQueues   MatchQueue[]
+  badges        UserBadge[]
+  notifications Notification[]
+  analyticsEvents AnalyticsEvent[]
 
   @@index([email])
+  @@index([xp])
+  @@index([level])
   @@map("User")
 }
 
@@ -43,6 +52,8 @@ model Room {
   updatedAt     DateTime @updatedAt
   participants  RoomParticipant[]
 
+  @@index([timeLeftSec])
+  @@index([category])
   @@map("Room")
 }
 
@@ -56,6 +67,7 @@ model RoomParticipant {
 
   @@unique([userId, roomId])
   @@index([roomId])
+  @@index([userId])
   @@map("RoomParticipant")
 }
 
@@ -69,6 +81,7 @@ model Friendship {
 
   @@unique([userId, friendId])
   @@index([friendId])
+  @@index([userId])
   @@map("Friendship")
 }
 
@@ -83,13 +96,44 @@ model Invite {
   inviterId  String
   inviteeEmail String
   inviteeId  String?
+  roomId     String?
   status     InviteStatus @default(PENDING)
   createdAt  DateTime     @default(now())
   respondedAt DateTime?
   inviter    User         @relation("Inviter", fields: [inviterId], references: [id], onDelete: Cascade)
   invitee    User?        @relation("Invitee", fields: [inviteeId], references: [id], onDelete: SetNull)
 
+  @@index([inviterId])
+  @@index([inviteeId])
+  @@index([roomId])
+  @@index([status])
   @@map("Invite")
+}
+
+model Badge {
+  id          String      @id @default(uuid())
+  name        String      @unique
+  description String
+  icon        String
+  xpReward    Int         @default(0)
+  createdAt   DateTime    @default(now())
+  users       UserBadge[]
+
+  @@map("Badge")
+}
+
+model UserBadge {
+  id        String   @id @default(uuid())
+  userId    String
+  badgeId   String
+  earnedAt  DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badge     Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, badgeId])
+  @@index([userId])
+  @@index([badgeId])
+  @@map("UserBadge")
 }
 
 enum QueueStatus {
@@ -106,6 +150,40 @@ model MatchQueue {
   updatedAt DateTime    @updatedAt
   user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
   @@map("MatchQueue")
 }
 
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  type      String
+  title     String
+  message   String
+  data      String?  @default("{}") // JSON string
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([read])
+  @@index([createdAt])
+  @@map("Notification")
+}
+
+model AnalyticsEvent {
+  id        String   @id @default(uuid())
+  userId    String?
+  eventType String
+  eventData String   @default("{}") // JSON string
+  metadata  String?  @default("{}") // JSON string
+  createdAt DateTime @default(now())
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([eventType])
+  @@index([createdAt])
+  @@map("AnalyticsEvent")
+}

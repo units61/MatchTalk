@@ -1,6 +1,7 @@
 import {prisma} from '../lib/prisma';
 import {emitToRoom} from '../websocket/server';
 import {Server as SocketIOServer} from 'socket.io';
+import {badgeService, XP_REWARDS} from './badgeService';
 
 interface TimerJob {
   roomId: string;
@@ -10,6 +11,7 @@ interface TimerJob {
 class TimerService {
   private timers: Map<string, TimerJob> = new Map();
   private io: SocketIOServer | null = null;
+  private voteStarted: Set<string> = new Set(); // Hangi odalarda oylama başlatıldı
 
   /**
    * WebSocket server'ı set et (timer güncellemeleri için)
@@ -44,6 +46,8 @@ class TimerService {
       clearInterval(timer.intervalId);
       this.timers.delete(roomId);
     }
+    // Oylama durumunu da temizle
+    this.voteStarted.delete(roomId);
   }
 
   /**
@@ -89,6 +93,19 @@ class TimerService {
         });
       }
 
+      // Son 10 saniyede uzama oylaması başlat (sadece bir kez)
+      if (newTimeLeft === 10 && !room.extended && !this.voteStarted.has(roomId)) {
+        // Uzama oylaması henüz başlatılmamışsa başlat
+        this.voteStarted.add(roomId);
+        if (this.io) {
+          emitToRoom(this.io, roomId, 'extension-vote-start', {
+            roomId,
+            timeLeft: newTimeLeft,
+            message: 'Süreyi uzatalım mı? 10 saniye içinde oy verin.',
+          });
+        }
+      }
+
       // Timer bittiğinde
       if (newTimeLeft <= 0) {
         await this.handleTimerExpiration(roomId);
@@ -125,6 +142,16 @@ class TimerService {
         },
       });
 
+      // Tüm katılımcılara XP ver (oda tamamlandı)
+      for (const participant of room.participants) {
+        try {
+          await badgeService.addXP(participant.user.id, XP_REWARDS.ROOM_COMPLETION, 'room-completion');
+        } catch (error) {
+          console.error(`Error adding XP to user ${participant.user.id}:`, error);
+          // XP hatası olsa bile devam et
+        }
+      }
+
       // WebSocket ile oda kapandı bildirimi gönder
       if (this.io) {
         emitToRoom(this.io, roomId, 'room-closed', {
@@ -133,7 +160,7 @@ class TimerService {
         });
 
         // Tüm katılımcılara bildir
-        room.participants.forEach((participant) => {
+        room.participants.forEach(() => {
           emitToRoom(this.io!, roomId, 'timer-expired', {
             roomId,
             message: 'Oda süresi doldu',
@@ -172,6 +199,7 @@ class TimerService {
 
   /**
    * Tüm aktif timer'ları başlat (server başlangıcında)
+   * Sadece timer başlamış odalar için (timeLeftSec > 0 ve timeLeftSec < durationSec)
    */
   async startAllActiveTimers() {
     const activeRooms = await prisma.room.findMany({
@@ -180,16 +208,25 @@ class TimerService {
           gt: 0,
         },
       },
-      select: {
-        id: true,
+      include: {
+        participants: true,
       },
     });
 
-    for (const room of activeRooms) {
+    // Sadece timer başlamış ve çalışan odalar için timer başlat
+    // (timeLeftSec === durationSec ise timer henüz başlamamış demektir)
+    const roomsToStart = activeRooms.filter(room => {
+      // Timer başlamış ve çalışıyor (timeLeftSec < durationSec)
+      // VEYA oda dolmuş ve timer başlamış (timeLeftSec === durationSec ve participants.length === maxParticipants)
+      return room.timeLeftSec < room.durationSec || 
+             (room.timeLeftSec === room.durationSec && room.participants.length === room.maxParticipants);
+    });
+
+    for (const room of roomsToStart) {
       await this.startTimer(room.id);
     }
 
-    console.log(`Started ${activeRooms.length} active room timers`);
+    logger.info(`Started ${roomsToStart.length} active room timers`);
   }
 
   /**

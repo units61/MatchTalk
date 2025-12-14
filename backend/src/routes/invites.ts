@@ -1,7 +1,8 @@
 import {Router, Response} from 'express';
 import {prisma} from '../lib/prisma';
-import {HttpError} from '../errors';
 import {authMiddleware, AuthRequest} from '../middleware/auth';
+import {badgeService, XP_REWARDS} from '../services/badgeService';
+import {logger} from '../logger';
 
 const router = Router();
 
@@ -77,12 +78,11 @@ router.post('/', async (req: AuthRequest, res: Response) => {
     }
 
     // Davet kontrolü (zaten davet gönderilmiş mi)
-    // Note: Invite model doesn't have roomId, so we check by inviterId, inviteeId, and status
     const existingInvite = await prisma.invite.findFirst({
       where: {
         inviterId: userId,
         inviteeId: friendId,
-        inviteeEmail: friend.email,
+        roomId: roomId,
         status: 'PENDING',
       },
     });
@@ -94,12 +94,13 @@ router.post('/', async (req: AuthRequest, res: Response) => {
       });
     }
 
-    // Davet oluştur (Invite model'de roomId yok, sadece email ve userId var)
+    // Davet oluştur
     const invite = await prisma.invite.create({
       data: {
         inviterId: userId,
         inviteeEmail: friend.email,
         inviteeId: friendId,
+        roomId: roomId,
         status: 'PENDING',
       },
       include: {
@@ -120,17 +121,19 @@ router.post('/', async (req: AuthRequest, res: Response) => {
       },
     });
 
-    // Note: Invite model doesn't have roomId field, we'll add it to response
-    const inviteWithRoom = {
-      ...invite,
-      roomId: roomId,
-    };
+    // XP ver (davet gönderildi)
+    try {
+      await badgeService.addXP(userId, XP_REWARDS.INVITE_SENT, 'invite-sent');
+    } catch (error) {
+      // XP hatası olsa bile devam et
+      logger.error('Error adding XP for invite sent:', error);
+    }
 
     res.status(201).json({
       success: true,
-      data: inviteWithRoom,
+      data: invite,
     });
-  } catch (error) {
+  } catch (_error) {
     res.status(500).json({
       success: false,
       error: 'Bir hata oluştu',
@@ -170,7 +173,7 @@ router.get('/', async (req: AuthRequest, res: Response) => {
       success: true,
       data: receivedInvites,
     });
-  } catch (error) {
+  } catch (_error) {
     res.status(500).json({
       success: false,
       error: 'Bir hata oluştu',
@@ -212,15 +215,11 @@ router.post('/:id/accept', async (req: AuthRequest, res: Response) => {
       });
     }
 
-    // Note: Invite model doesn't have roomId field
-    // We need to get roomId from request body or add it to Invite model
-    // For now, we'll require roomId in request body
-    const {roomId} = req.body;
-
-    if (!roomId) {
+    // roomId'yi invite'den al
+    if (!invite.roomId) {
       return res.status(400).json({
         success: false,
-        error: 'roomId gerekli',
+        error: 'Davet geçersiz: roomId bulunamadı',
       });
     }
 
@@ -229,10 +228,10 @@ router.post('/:id/accept', async (req: AuthRequest, res: Response) => {
       await prisma.roomParticipant.create({
         data: {
           userId,
-          roomId: roomId,
+          roomId: invite.roomId,
         },
       });
-    } catch (error) {
+    } catch (_error) {
       // Zaten odada olabilir
       return res.status(400).json({
         success: false,
@@ -251,9 +250,9 @@ router.post('/:id/accept', async (req: AuthRequest, res: Response) => {
 
     res.status(200).json({
       success: true,
-      data: {roomId: roomId},
+      data: {roomId: invite.roomId},
     });
-  } catch (error) {
+  } catch (_error) {
     res.status(500).json({
       success: false,
       error: 'Bir hata oluştu',
@@ -307,7 +306,7 @@ router.post('/:id/reject', async (req: AuthRequest, res: Response) => {
     res.status(200).json({
       success: true,
     });
-  } catch (error) {
+  } catch (_error) {
     res.status(500).json({
       success: false,
       error: 'Bir hata oluştu',

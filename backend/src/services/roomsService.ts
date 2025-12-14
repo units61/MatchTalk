@@ -1,7 +1,7 @@
-import {prisma} from '../lib/prisma';
-import {HttpError} from '../errors';
-import {CreateRoomInput, JoinRoomInput} from '../schemas/rooms';
-import {timerService} from './timerService';
+import { prisma } from '../lib/prisma';
+import { HttpError } from '../errors';
+import { CreateRoomInput, JoinRoomInput } from '../schemas/rooms';
+import { timerService } from './timerService';
 
 export class RoomsService {
   /**
@@ -72,14 +72,14 @@ export class RoomsService {
       throw new HttpError(400, 'Zaten bir odadasınız');
     }
 
-    // Oda oluştur
+    // Oda oluştur (timer başlamamış - timeLeftSec = 0)
     const room = await prisma.room.create({
       data: {
         name: input.name,
         category: input.category,
         maxParticipants: input.maxParticipants,
         durationSec: input.durationSec,
-        timeLeftSec: input.durationSec,
+        timeLeftSec: 0, // Timer oda dolduğunda başlayacak
         participants: {
           create: {
             userId,
@@ -124,97 +124,117 @@ export class RoomsService {
    * Odaya katılma
    */
   async joinRoom(userId: string, input: JoinRoomInput) {
-    // Oda kontrolü
-    const room = await prisma.room.findUnique({
-      where: {id: input.roomId},
-      include: {
-        participants: true,
-      },
-    });
+    let shouldStartTimer = false;
 
-    if (!room) {
-      throw new HttpError(404, 'Oda bulunamadı');
-    }
+    const result = await prisma.$transaction(async (tx) => {
+      // 1. Odayı kilitle (Concurrency için - Race Condition Önlemi)
+      // PostgreSQL "FOR UPDATE" ile bu satırı kilitler, işlem bitene kadar başkası okuyamaz/yazamaz.
+      await tx.$executeRaw`SELECT 1 FROM "Room" WHERE id = ${input.roomId} FOR UPDATE`;
 
-    if (room.timeLeftSec <= 0) {
-      throw new HttpError(400, 'Oda süresi dolmuş');
-    }
-
-    if (room.participants.length >= room.maxParticipants) {
-      throw new HttpError(400, 'Oda dolu');
-    }
-
-    // Kullanıcının zaten odada olup olmadığını kontrol et
-    const existingParticipation = room.participants.find(p => p.userId === userId);
-    if (existingParticipation) {
-      throw new HttpError(400, 'Zaten bu odadasınız');
-    }
-
-    // Kullanıcının başka bir odada olup olmadığını kontrol et
-    const otherRoomParticipation = await prisma.roomParticipant.findFirst({
-      where: {
-        userId,
-        roomId: {
-          not: input.roomId,
+      // 2. Oda bilgilerini getir
+      const room = await tx.room.findUnique({
+        where: { id: input.roomId },
+        include: {
+          participants: true,
         },
-        room: {
-          timeLeftSec: {
-            gt: 0,
-          },
+      });
+
+      if (!room) {
+        throw new HttpError(404, 'Oda bulunamadı');
+      }
+
+      // Validasyonlar
+      if (room.timeLeftSec === 0 && room.participants.length === room.maxParticipants) {
+        throw new HttpError(400, 'Oda süresi dolmuş');
+      }
+
+      if (room.participants.length >= room.maxParticipants) {
+        throw new HttpError(400, 'Oda dolu');
+      }
+
+      const existingParticipation = room.participants.find(p => p.userId === userId);
+      if (existingParticipation) {
+        throw new HttpError(400, 'Zaten bu odadasınız');
+      }
+
+      // Başka oda kontrolü
+      const otherRoomParticipation = await tx.roomParticipant.findFirst({
+        where: {
+          userId,
+          roomId: { not: input.roomId },
+          room: { timeLeftSec: { gt: 0 } },
         },
-      },
-    });
+      });
 
-    if (otherRoomParticipation) {
-      throw new HttpError(400, 'Başka bir odadasınız');
-    }
+      if (otherRoomParticipation) {
+        throw new HttpError(400, 'Başka bir odadasınız');
+      }
 
-    // Odaya katıl
-    await prisma.roomParticipant.create({
-      data: {
-        userId,
-        roomId: input.roomId,
-      },
-    });
+      // 3. Odaya katıl
+      await tx.roomParticipant.create({
+        data: {
+          userId,
+          roomId: input.roomId,
+        },
+      });
 
-    // Güncellenmiş oda bilgilerini getir
-    const updatedRoom = await prisma.room.findUnique({
-      where: {id: input.roomId},
-      include: {
-        participants: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                gender: true,
+      // 4. Güncel durumu kontrol et (Timer başlatma ihtiyacı var mı?)
+      // Create sonrası participant sayısı +1 oldu.
+      const currentCount = room.participants.length + 1;
+
+      if (currentCount === room.maxParticipants && room.timeLeftSec === 0) {
+        // Timer başlatılmalı
+        await tx.room.update({
+          where: { id: input.roomId },
+          data: { timeLeftSec: room.durationSec },
+        });
+        shouldStartTimer = true;
+      }
+
+      // 5. Return için güncel odayı getir
+      return await tx.room.findUnique({
+        where: { id: input.roomId },
+        include: {
+          participants: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  gender: true,
+                },
               },
             },
           },
         },
-      },
+      });
     });
 
-    if (!updatedRoom) {
-      throw new HttpError(500, 'Oda bilgileri alınamadı');
+    if (!result) throw new HttpError(500, 'İşlem başarısız');
+
+    // Transaction başarılı ise ve timer başlatılmalıysa başlat
+    if (shouldStartTimer) {
+      // Not: startTimer async ama burada await etmemize gerek yok, arka planda çalışsın.
+      // Hata yakalama eklenebilir.
+      timerService.startTimer(input.roomId).catch(err => console.error('Timer start error:', err));
     }
 
     return {
-      id: updatedRoom.id,
-      name: updatedRoom.name,
-      category: updatedRoom.category,
-      maxParticipants: updatedRoom.maxParticipants,
-      currentParticipants: updatedRoom.participants.length,
-      timeLeftSec: updatedRoom.timeLeftSec,
-      durationSec: updatedRoom.durationSec,
-      participants: updatedRoom.participants.map(p => ({
+      id: result.id,
+      name: result.name,
+      category: result.category,
+      maxParticipants: result.maxParticipants,
+      currentParticipants: result.participants.length,
+      timeLeftSec: result.timeLeftSec,
+      durationSec: result.durationSec,
+      participants: result.participants.map(p => ({
         id: p.user.id,
         name: p.user.name,
         gender: p.user.gender,
       })),
-      maleCount: updatedRoom.participants.filter(p => p.user.gender === 'male').length,
-      femaleCount: updatedRoom.participants.filter(p => p.user.gender === 'female').length,
-      createdAt: updatedRoom.createdAt,
+      maleCount: result.participants.filter(p => p.user.gender === 'male').length,
+      femaleCount: result.participants.filter(p => p.user.gender === 'female').length,
+      createdAt: result.createdAt,
     };
   }
 
@@ -245,16 +265,16 @@ export class RoomsService {
 
     // Eğer odada kimse kalmadıysa odayı sil
     const remainingParticipants = await prisma.roomParticipant.count({
-      where: {roomId},
+      where: { roomId },
     });
 
     if (remainingParticipants === 0) {
       await prisma.room.delete({
-        where: {id: roomId},
+        where: { id: roomId },
       });
     }
 
-    return {success: true};
+    return { success: true };
   }
 
   /**
@@ -262,7 +282,7 @@ export class RoomsService {
    */
   async getRoomById(roomId: string) {
     const room = await prisma.room.findUnique({
-      where: {id: roomId},
+      where: { id: roomId },
       include: {
         participants: {
           include: {

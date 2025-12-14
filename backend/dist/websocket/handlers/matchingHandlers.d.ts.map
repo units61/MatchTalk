@@ -1,0 +1,1 @@
+{"version":3,"file":"matchingHandlers.d.ts","sourceRoot":"","sources":["../../../src/websocket/handlers/matchingHandlers.ts"],"names":[],"mappings":"AAAA,OAAO,EAAC,MAAM,EAAC,MAAM,WAAW,CAAC;AACjC,OAAO,EAAC,MAAM,IAAI,cAAc,EAAC,MAAM,WAAW,CAAC;AAKnD,eAAO,MAAM,gBAAgB,GAC3B,QAAQ,MAAM,EACd,IAAI,cAAc,EAClB,QAAQ,MAAM,SAyEf,CAAC"}

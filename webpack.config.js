@@ -1,5 +1,6 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const Dotenv = require('dotenv-webpack');
 
 module.exports = {
   entry: './src/web/index.jsx',
@@ -10,7 +11,7 @@ module.exports = {
     publicPath: '/',
   },
   resolve: {
-    extensions: ['.web.js', '.web.ts', '.web.tsx', '.ts', '.tsx', '.js', '.jsx'],
+    extensions: ['.tsx', '.ts', '.jsx', '.js', '.json'],
     alias: {
       'react-native$': 'react-native-web',
     },
@@ -18,10 +19,20 @@ module.exports = {
   module: {
     rules: [
       {
-        test: /\.[jt]sx?$/,
+        test: /\.(ts|tsx|js|jsx)$/,
         exclude: /node_modules/,
         use: {
           loader: 'babel-loader',
+          options: {
+            cacheDirectory: true,
+            presets: [
+              ['@babel/preset-env', { targets: { browsers: ['> 1%', 'last 2 versions'] } }],
+              ['@babel/preset-react', { runtime: 'automatic' }],
+              '@babel/preset-typescript',
+            ],
+            plugins: [],
+            babelrc: false,
+          },
         },
       },
       {
@@ -35,19 +46,26 @@ module.exports = {
     ],
   },
   plugins: [
+    new Dotenv({
+      path: './.env', // .env dosyasının yolu
+      safe: false, // .env.example dosyası kontrolü yapma
+      systemvars: true, // Sistem environment variable'larını da dahil et
+      silent: false, // Hataları göster
+    }),
     new HtmlWebpackPlugin({
-      template: path.resolve(__dirname, 'public', 'index.html'),
+      template: './public/index.html',
+      filename: 'index.html',
     }),
   ],
   devServer: {
     static: {
       directory: path.join(__dirname, 'public'),
     },
-    historyApiFallback: true,
-    hot: true,
-    host: 'localhost',
+    compress: true,
     port: 3000,
+    hot: true,
+    historyApiFallback: true,
+    open: true,
   },
-  devtool: 'source-map',
-  mode: 'development',
+  mode: process.env.NODE_ENV || 'development',
 };

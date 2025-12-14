@@ -10,7 +10,7 @@ import {useWebSocket} from '../../hooks/useWebSocket';
 
 interface MatchingScreenProps {
   onBack?: () => void;
-  onMatchComplete?: () => void;
+  onMatchComplete?: (roomId?: string) => void;
 }
 
 interface Participant {
@@ -81,9 +81,7 @@ const MatchingScreen: React.FC<MatchingScreenProps> = ({onBack, onMatchComplete}
       // Store room info for navigation
       // You can use navigation or state management here
       setTimeout(() => {
-        onMatchComplete?.();
-        // Navigate to room screen would go here
-        // navigation.navigate('Room', {roomId: data.roomId});
+        onMatchComplete?.(data.roomId);
       }, 1000);
     };
 
@@ -99,15 +97,6 @@ const MatchingScreen: React.FC<MatchingScreenProps> = ({onBack, onMatchComplete}
       leaveMatching();
     };
   }, [joinMatching, leaveMatching, on, off, getMatchingStatus, onMatchComplete]);
-    {id: '1', name: 'Alice', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCArwVrIASKonv_PkwpxzWMVA17OHhse3igAdTCep17-96hm6DPhqHA1MnFdo8PvBG1Qy_gd6ID08dRs9AmoNNWiDLbRuZTXoFt8hUIGDBrXXYv-gYVHgdR2s_Ocinb4pfXLKYd2Od9klSTk5Nha8ovvURqeVjdh4L7CpfIJasTuvsX93V0yJsRzJHTyNQP_YlHA-NVLBHIFBbxAN0sdwofNtyCKo5BVBzP95senj0brlkpxdWLFtgJ1cCn3V54pPGW9jHDX55XBEw', isFilled: true},
-    {id: '2', name: 'David', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBEGvgfbyMGj-29xVWQmjimEMsguzQMLv6Enr4ZKF1Qw4wEzs3q8SrmY4cQX4d57nsMQe5RNh15F0eWTgEWhK8zFU8ZZR8Eh5TpXWwj3gqAOrXI5yu5WSXmaz02zOrrNUZ16165ceEHjBwqd7PEJaJmfeP_LHvFQWnG1k5AHWTkhnVXovxzbxeI5RApTlLxhzunHz9sJEUaTGrVLRY5lJvAnn8LTh3Wj21S-c0phzRKOon4r6OsL3gb66-7BBuo8bR--6TPKvv1VgU', isFilled: true},
-    {id: '3', name: 'Sarah', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBI2JXuhfaU4Zb91W2glNbLHI13xlGX2BVBkNTygqcsRQUIhzXtK5rBqLms0rwqeUda0Z4ZEjEsytQsBGebljfySeIaKztQnoHjMhKH0Uj_X1CW4591XyKYYrLnCwCl4Ch2FgyLVDA1Iar1vBthakklE_rbvnw3YzC4IZv5FVEAbxcWs5gXUAT3iyyYnyQIMCT5IOsf_-L4hi33jN-QEumPyHR2LnkxNsG_w-p-aoWXkSakhmsFLOOExSZRSnVDc8BMLJCNY5mNrIA', isFilled: true},
-    {id: '4', name: 'Mike', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBuMOmQP4wsoQY99i2v35x93HF3hg-t2SILXEDAGW8sDvUdKgDwBxNZGlsombhzMYPgUKF_6ofD2WjYLOVHT6Cy3p26c3EQHBr5thdEwIDo3L7axHraNzqXG6XT5fGqAuqgqQ6OzQw7gZZMbM2LmMpfuyAtx0jZBZ7H85il4kWynjYfZKo_hWbLFAGtihdN_txy5P4dfSWeOOXQNcPjNU1IW-g4oUIZe1VswTIdw86KLO2DsNghO-vGIY5-6JhG4G59UFGmZ6hYcdk', isFilled: true},
-    {id: '5', name: '', avatar: undefined, isFilled: false}, // Empty slot
-    {id: '6', name: '', avatar: undefined, isFilled: false}, // Empty slot
-    {id: '7', name: 'Emma', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCcJvOOQq71YTDogHOiYb4QSL4_EROPjJaF9buPWUINEfDFJ_o3tNt7J_-lfpJk0EIAC3MbXXEjV0csnheE71Cxi2Mv86Xaf3obw2he0kLaClYq-yOAnJh_5-ydPM2kd4Xyhz3-NH31xxHilt3Bp3l1hlVpK__cAUhKlVtyDnzZ1oNFLL7VCxbtW18cc-TDmpFZBIPFo-t7tFqvp1a71NODy3VjXU3IGKKFzq28vQGtfp8vlsL14eYJOHDcaAzXPtpOyzYXyBMMUxk', isFilled: true},
-    {id: '8', name: '', avatar: undefined, isFilled: false}, // Empty slot
-  ]);
 
   // Avatar positions in a circle (8 positions)
   const avatarPositions = [
@@ -157,7 +146,7 @@ const MatchingScreen: React.FC<MatchingScreenProps> = ({onBack, onMatchComplete}
               <View key={participant.id} style={[styles.avatarSlot, position]}>
                 {participant.isFilled && participant.avatar ? (
                   <View style={styles.filledAvatar}>
-                    <Avatar uri={participant.avatar} size={72} />
+                    <Avatar uri={participant.avatar} name={participant.name} size={72} />
                   </View>
                 ) : (
                   <View style={styles.emptyAvatar}>
@@ -289,11 +278,7 @@ const styles = StyleSheet.create({
     borderRadius: 80,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.05)',
-    ...Platform.select({
-      web: {
-        animation: 'spin 8s linear infinite',
-      },
-    }),
+    // Animation removed - web CSS animations not supported in React Native Web styles
   },
   decorativeCircle2: {
     position: 'absolute',
@@ -347,7 +332,11 @@ const styles = StyleSheet.create({
     zIndex: 10,
     ...Platform.select({
       web: {
-        background: 'linear-gradient(to top, #0F172A, transparent)',
+        backgroundColor: 'rgba(15, 23, 42, 0.8)',
+      },
+      default: {
+        backgroundColor: '#0F172A',
+        opacity: 0.8,
       },
     }),
   },
@@ -374,25 +363,13 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
   },
   dot1: {
-    ...Platform.select({
-      web: {
-        animation: 'bounce 1.4s infinite',
-      },
-    }),
+    // Animation removed - web CSS animations not supported in React Native Web styles
   },
   dot2: {
-    ...Platform.select({
-      web: {
-        animation: 'bounce 1.4s infinite 0.2s',
-      },
-    }),
+    // Animation removed - web CSS animations not supported in React Native Web styles
   },
   dot3: {
-    ...Platform.select({
-      web: {
-        animation: 'bounce 1.4s infinite 0.4s',
-      },
-    }),
+    // Animation removed - web CSS animations not supported in React Native Web styles
   },
   progressBarContainer: {
     height: 6,

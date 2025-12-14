@@ -36,9 +36,10 @@ class VoteService {
       throw new HttpError(403, 'Bu odada değilsiniz');
     }
 
-    // Timer bitmiş mi kontrol et (sadece timer bittiğinde oy verilebilir)
-    if (room.timeLeftSec > 0) {
-      throw new HttpError(400, 'Oda süresi henüz dolmadı');
+    // Timer son 10 saniyede mi kontrol et (sadece son 10 saniyede oy verilebilir)
+    // timeLeftSec <= 10 && timeLeftSec > 0 olmalı
+    if (room.timeLeftSec > 10 || room.timeLeftSec <= 0) {
+      throw new HttpError(400, 'Uzama oylaması sadece son 10 saniyede yapılabilir');
     }
 
     // Kullanıcı daha önce oy vermiş mi kontrol et
@@ -157,7 +158,7 @@ class VoteService {
         // Odayı 5 dakika uzat
         const extensionSeconds = 300; // 5 dakika
 
-        const room = await prisma.room.update({
+        await prisma.room.update({
           where: {id: roomId},
           data: {
             timeLeftSec: extensionSeconds,
@@ -168,7 +169,8 @@ class VoteService {
           },
         });
 
-        // Timer'ı yeniden başlat
+        // Timer'ı yeniden başlat (voteStarted durumunu temizlemek için stopTimer çağır)
+        await timerService.stopTimer(roomId);
         await timerService.startTimer(roomId);
 
         // WebSocket ile bildir

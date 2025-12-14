@@ -16,10 +16,23 @@ export const authApi = {
    * Kullanıcı girişi
    */
   async login(input: LoginInput): Promise<LoginResponse> {
-    const response = await apiClient.post<LoginResponse>('/auth/login', input);
-    // Token'ı kaydet
-    await apiClient.setToken(response.token);
-    return response;
+    try {
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[authApi] Login request:', input);
+      }
+      const response = await apiClient.post<LoginResponse>('/auth/login', input);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[authApi] Login response:', response);
+      }
+      // Token'ı kaydet
+      await apiClient.setToken(response.token);
+      return response;
+    } catch (error) {
+      if (process.env.NODE_ENV === 'development') {
+        console.error('[authApi] Login error:', error);
+      }
+      throw error;
+    }
   },
 
   /**

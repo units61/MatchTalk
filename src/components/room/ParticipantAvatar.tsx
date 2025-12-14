@@ -1,5 +1,5 @@
 import React from 'react';
-import {View, Text, StyleSheet} from 'react-native';
+import {View, Text, StyleSheet, Platform} from 'react-native';
 import Avatar from '../common/Avatar';
 import Icon from '../common/Icon';
 import {typography} from '../../theme/typography';
@@ -29,7 +29,7 @@ export const ParticipantAvatar: React.FC<Props> = ({
     <View style={styles.container}>
       <View style={[styles.avatarWrapper, active && styles.activeSpeaker]}>
         {avatar ? (
-          <Avatar uri={avatar} size={size} />
+          <Avatar uri={avatar} name={name} size={size} />
         ) : (
           <View style={[styles.placeholderAvatar, {width: size, height: size}]}>
             <Text style={[styles.placeholderText, {fontSize: size * 0.3}]}>
@@ -72,10 +72,17 @@ const styles = StyleSheet.create({
   activeSpeaker: {
     borderWidth: 3,
     borderColor: colors.primary,
-    shadowColor: colors.primary,
-    shadowOffset: {width: 0, height: 0},
-    shadowOpacity: 0.6,
-    shadowRadius: 10,
+    ...Platform.select({
+      web: {
+        boxShadow: `0 0 10px ${colors.primary}99`,
+      },
+      default: {
+        shadowColor: colors.primary,
+        shadowOffset: {width: 0, height: 0},
+        shadowOpacity: 0.6,
+        shadowRadius: 10,
+      },
+    }),
   },
   placeholderAvatar: {
     backgroundColor: colors.cardDark,

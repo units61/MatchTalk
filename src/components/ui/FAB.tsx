@@ -1,5 +1,5 @@
 import React from 'react';
-import {View, Text, StyleSheet, Pressable, Platform} from 'react-native';
+import {View, Text, StyleSheet, Pressable, Platform, Alert} from 'react-native';
 import Icon from '../common/Icon';
 import {colors} from '../../theme/colors';
 import {spacing} from '../../theme/spacing';
@@ -11,9 +11,17 @@ interface FABProps {
 }
 
 const FAB: React.FC<FABProps> = ({onPress, label = 'Yeni Odaya Katıl'}) => {
+  const handlePress = (e?: any) => {
+    e?.stopPropagation?.();
+    onPress();
+  };
+
   return (
     <View style={styles.container}>
-      <Pressable style={styles.button} onPress={onPress}>
+      <Pressable 
+        style={styles.button} 
+        onPress={handlePress}
+        hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
         <Icon name="add_circle" style={styles.icon} />
         <Text style={styles.label}>{label}</Text>
       </Pressable>
@@ -28,12 +36,12 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     alignItems: 'center',
-    zIndex: 30,
+    zIndex: 1000, // Yüksek z-index - diğer elementlerin üstünde olmalı
     paddingHorizontal: spacing.xl,
-    pointerEvents: 'box-none',
+    pointerEvents: 'box-none', // Container tıklamaları geçirir, sadece içindeki elementler tıklanabilir
     ...Platform.select({
       web: {
-        pointerEvents: 'none',
+        pointerEvents: 'box-none',
       },
     }),
   },
@@ -55,7 +63,10 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.1)',
     ...Platform.select({
       web: {
-        pointerEvents: 'auto',
+        cursor: 'pointer',
+        userSelect: 'none',
+        pointerEvents: 'auto', // Buton tıklanabilir olmalı
+        zIndex: 1001,
       },
     }),
   },

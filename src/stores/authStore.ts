@@ -36,16 +36,15 @@ export const useAuthStore = create<AuthState>((set) => ({
         loading: false,
         error: null,
       });
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Giriş başarısız';
+    } catch (error) {
       set({
         loading: false,
-        error: message,
+        error: error instanceof Error ? error.message : 'Giriş başarısız',
         isAuthenticated: false,
         user: null,
         token: null,
       });
-      throw err;
+      throw error;
     }
   },
 
@@ -60,16 +59,15 @@ export const useAuthStore = create<AuthState>((set) => ({
         loading: false,
         error: null,
       });
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Kayıt başarısız';
+    } catch (error) {
       set({
         loading: false,
-        error: message,
+        error: error instanceof Error ? error.message : 'Kayıt başarısız',
         isAuthenticated: false,
         user: null,
         token: null,
       });
-      throw err;
+      throw error;
     }
   },
 

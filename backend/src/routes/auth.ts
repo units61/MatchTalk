@@ -1,8 +1,10 @@
 import {Router, Request, Response} from 'express';
+import {z} from 'zod';
 import {authService} from '../services/authService';
 import {registerSchema, loginSchema} from '../schemas/auth';
 import {HttpError} from '../errors';
 import {authMiddleware, AuthRequest} from '../middleware/auth';
+import {logger} from '../logger';
 
 const router = Router();
 
@@ -12,6 +14,9 @@ const router = Router();
  */
 router.post('/register', async (req: Request, res: Response) => {
   try {
+    // Log request body for debugging
+    logger.debug('Register request body:', {body: req.body});
+    
     // Validation
     const validatedData = registerSchema.parse(req.body);
 
@@ -23,16 +28,27 @@ router.post('/register', async (req: Request, res: Response) => {
       data: result,
     });
   } catch (error) {
+    logger.error('Register error:', error);
+    
     if (error instanceof HttpError) {
       res.status(error.status).json({
         success: false,
         error: error.message,
       });
-    } else if (error instanceof Error) {
-      // Zod validation errors
+    } else if (error instanceof z.ZodError) {
+      // Zod validation errors - better error handling
+      const firstError = error.errors[0];
+      const errorMessage = firstError 
+        ? `${firstError.path.join('.')}: ${firstError.message}`
+        : 'Geçersiz kayıt bilgileri';
       res.status(400).json({
         success: false,
-        error: error.message,
+        error: errorMessage,
+      });
+    } else if (error instanceof Error) {
+      res.status(400).json({
+        success: false,
+        error: error.message || 'Geçersiz kayıt bilgileri',
       });
     } else {
       res.status(500).json({
@@ -49,6 +65,9 @@ router.post('/register', async (req: Request, res: Response) => {
  */
 router.post('/login', async (req: Request, res: Response) => {
   try {
+    // Log request body for debugging
+    logger.debug('Login request body:', {body: req.body});
+    
     // Validation
     const validatedData = loginSchema.parse(req.body);
 
@@ -60,16 +79,27 @@ router.post('/login', async (req: Request, res: Response) => {
       data: result,
     });
   } catch (error) {
+    logger.error('Login error:', error);
+    
     if (error instanceof HttpError) {
       res.status(error.status).json({
         success: false,
         error: error.message,
       });
-    } else if (error instanceof Error) {
-      // Zod validation errors
+    } else if (error instanceof z.ZodError) {
+      // Zod validation errors - better error handling
+      const firstError = error.errors[0];
+      const errorMessage = firstError 
+        ? `${firstError.path.join('.')}: ${firstError.message}`
+        : 'Geçersiz giriş bilgileri';
       res.status(400).json({
         success: false,
-        error: error.message,
+        error: errorMessage,
+      });
+    } else if (error instanceof Error) {
+      res.status(400).json({
+        success: false,
+        error: error.message || 'Geçersiz giriş bilgileri',
       });
     } else {
       res.status(500).json({

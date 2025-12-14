@@ -10,9 +10,10 @@ interface Props {
   visible: boolean;
   onVote: (vote: 'yes' | 'no') => void;
   onClose: () => void;
+  timeLeft?: number; // Kalan oylama süresi (saniye)
 }
 
-export const VoteModal: React.FC<Props> = ({visible, onVote, onClose}) => {
+export const VoteModal: React.FC<Props> = ({visible, onVote, onClose, timeLeft = 10}) => {
   if (!visible) {
     return null;
   }
@@ -20,7 +21,7 @@ export const VoteModal: React.FC<Props> = ({visible, onVote, onClose}) => {
     <View style={styles.overlay}>
       <View style={styles.modal}>
         <Text style={styles.title}>Süreyi uzatalım mı?</Text>
-        <Text style={styles.desc}>10 sn içinde oy ver</Text>
+        <Text style={styles.desc}>{timeLeft} sn içinde oy ver</Text>
         <View style={styles.actions}>
           <Button
             title="Hayır"
@@ -73,6 +74,16 @@ const styles = StyleSheet.create({
 });
 
 export default VoteModal;
+
+
+
+
+
+
+
+
+
+
 
 
 

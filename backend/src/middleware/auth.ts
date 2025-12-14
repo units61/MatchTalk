@@ -22,7 +22,7 @@ export const authMiddleware = (
     const decoded = jwt.verify(token, config.jwtSecret) as {userId: string};
     req.userId = decoded.userId;
     next();
-  } catch (error) {
+  } catch (_error) {
     throw new HttpError(401, 'Invalid token');
   }
 };

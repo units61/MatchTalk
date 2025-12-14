@@ -1,10 +1,12 @@
 import React, {useState, useEffect} from 'react';
 import {View, Text, StyleSheet, ScrollView, Pressable, Platform, RefreshControl} from 'react-native';
+import {useNavigate} from 'react-router-dom';
 import Icon from '../../components/common/Icon';
 import RoomCard from '../../components/room/RoomCard';
 import BottomNav from '../../components/ui/BottomNav';
 import FAB from '../../components/ui/FAB';
 import Avatar from '../../components/common/Avatar';
+import CreateRoomModal from '../../components/room/CreateRoomModal';
 import {colors} from '../../theme/colors';
 import {spacing} from '../../theme/spacing';
 import {typography} from '../../theme/typography';
@@ -12,6 +14,9 @@ import {radius} from '../../theme/radius';
 import {useRoomsStore} from '../../stores/roomsStore';
 import {useAuthStore} from '../../stores/authStore';
 import {useWebSocket} from '../../hooks/useWebSocket';
+import {useWebSocketEvents} from '../../hooks/useWebSocketEvents';
+import {useNavigation} from '../../hooks/useNavigation';
+import {CreateRoomInput} from '../../schemas/room';
 
 interface HomeScreenProps {
   onTabChange?: (tab: 'home' | 'friends' | 'profile' | 'settings') => void;
@@ -19,54 +24,72 @@ interface HomeScreenProps {
 
 const HomeScreen: React.FC<HomeScreenProps> = ({onTabChange}) => {
   const [activeTab, setActiveTab] = useState<'home' | 'friends' | 'profile' | 'settings'>('home');
-  const {rooms, loading, fetchRooms, joinRoom, updateRoom} = useRoomsStore();
-  const {user, isAuthenticated} = useAuthStore();
-  const {on, off, isConnected} = useWebSocket();
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
-  useEffect(() => {
-    fetchRooms();
-  }, [fetchRooms]);
+  const {rooms, loading, fetchRooms, joinRoom, createRoom, updateRoom, currentRoom, leaveRoom} = useRoomsStore();
+  const {user} = useAuthStore();
+  const navigation = useNavigation();
+  const navigate = useNavigate(); // React Router navigate hook
 
-  // Real-time room updates
-  useEffect(() => {
-    if (!isAuthenticated || !isConnected) {
-      return;
-    }
-
-    // Listen for room updates
-    const handleRoomUpdate = (data: {room?: any; joinedUser?: {id: string}; leftUser?: {id: string}}) => {
+  // Use WebSocket events hook for real-time updates
+  useWebSocketEvents({
+    onRoomUpdate: (data: {room?: any; joinedUser?: {id: string}; leftUser?: {id: string}}) => {
       if (data.room) {
         updateRoom(data.room.id, data.room);
       } else if (data.joinedUser || data.leftUser) {
         // Refresh rooms list when someone joins/leaves
         fetchRooms();
       }
-    };
-
-    // Listen for new room created
-    const handleRoomCreated = (data: {room: any}) => {
+    },
+    onRoomCreated: () => {
       fetchRooms();
-    };
-
-    // Listen for room closed
-    const handleRoomClosed = (data: {roomId: string; reason: string}) => {
+    },
+    onRoomClosed: () => {
       fetchRooms();
+    },
+  });
+
+  useEffect(() => {
+    fetchRooms();
+  }, [fetchRooms]);
+
+  // Ana sayfaya dönüldüğünde aktif oda kontrolü ve temizleme
+  useEffect(() => {
+    const checkAndCleanupActiveRoom = async () => {
+      // Odalar yüklenene kadar bekle
+      if (loading || rooms.length === 0) {
+        return;
+      }
+
+      // Eğer frontend'de currentRoom null ama backend'de kullanıcının katıldığı bir oda varsa
+      if (!currentRoom && user) {
+        // Dönen odalar listesinde kullanıcının katıldığı bir oda var mı kontrol et
+        const userActiveRoom = rooms.find((room) => {
+          return room.participants.some((participant) => participant.id === user.id);
+        });
+
+        if (userActiveRoom) {
+          console.log(`[HomeScreen] Kullanıcı ${user.id} backend'de ${userActiveRoom.id} odasında görünüyor ama frontend'de currentRoom null. Temizleniyor...`);
+          try {
+            await leaveRoom(userActiveRoom.id);
+            console.log(`[HomeScreen] Başarıyla ${userActiveRoom.id} odasından ayrıldı`);
+          } catch (error) {
+            console.warn(`[HomeScreen] Odadan ayrılırken hata oluştu:`, error);
+            // Hata kritik değil, kullanıcıya bilgi vermeye gerek yok
+          }
+        }
+      }
     };
 
-    on('room-update', handleRoomUpdate);
-    on('room-created', handleRoomCreated);
-    on('room-closed', handleRoomClosed);
-
-    return () => {
-      off('room-update', handleRoomUpdate);
-      off('room-created', handleRoomCreated);
-      off('room-closed', handleRoomClosed);
-    };
-  }, [isAuthenticated, isConnected, on, off, fetchRooms, updateRoom]);
+    checkAndCleanupActiveRoom();
+  }, [rooms, loading, currentRoom, user, leaveRoom]);
 
   const handleTabChange = (tab: 'home' | 'friends' | 'profile' | 'settings') => {
     setActiveTab(tab);
     onTabChange?.(tab);
+    // Navigate to the selected tab
+    console.log(`[HomeScreen] Navigating to tab: ${tab}`);
+    navigate(`/${tab}`);
   };
 
   const handleRefresh = () => {
@@ -76,10 +99,26 @@ const HomeScreen: React.FC<HomeScreenProps> = ({onTabChange}) => {
   const handleJoinRoom = async (roomId: string) => {
     try {
       await joinRoom(roomId);
-      // Navigate to room screen would go here
-      console.log('Joined room:', roomId);
+      // Navigate to room screen using React Router directly
+      console.log(`[HomeScreen] Navigating to room: ${roomId}`);
+      navigate(`/room/${roomId}`);
     } catch (error) {
       console.error('Failed to join room:', error);
+      // Error will be handled by toast notifications later
+    }
+  };
+
+  const handleCreateRoom = async (input: CreateRoomInput) => {
+    try {
+      const room = await createRoom(input);
+      setShowCreateModal(false);
+      // Navigate to the created room using React Router directly
+      console.log(`[HomeScreen] Navigating to created room: ${room.id}`);
+      navigate(`/room/${room.id}`);
+    } catch (error) {
+      console.error('Failed to create room:', error);
+      // Error will be handled by toast notifications later
+      throw error; // Re-throw to let modal handle it
     }
   };
 
@@ -97,7 +136,12 @@ const HomeScreen: React.FC<HomeScreenProps> = ({onTabChange}) => {
 
         {/* Right: Actions */}
         <View style={styles.headerActions}>
-          <Pressable style={styles.notificationButton}>
+          <Pressable
+            style={styles.notificationButton}
+            onPress={() => {
+              console.log('[HomeScreen] Navigating to notifications');
+              navigate('/notifications');
+            }}>
             <Icon name="notifications" style={styles.notificationIcon} />
             <View style={styles.badge} />
           </Pressable>
@@ -119,7 +163,8 @@ const HomeScreen: React.FC<HomeScreenProps> = ({onTabChange}) => {
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl refreshing={loading} onRefresh={handleRefresh} />
-        }>
+        }
+        pointerEvents="box-none">
         {/* Section Header */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Aktif Odalar</Text>
@@ -161,7 +206,15 @@ const HomeScreen: React.FC<HomeScreenProps> = ({onTabChange}) => {
       </ScrollView>
 
       {/* Floating Action Button */}
-      <FAB onPress={() => console.log('New room')} />
+      <FAB onPress={() => setShowCreateModal(true)} />
+
+      {/* Create Room Modal */}
+      <CreateRoomModal
+        visible={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onSubmit={handleCreateRoom}
+        loading={loading}
+      />
 
       {/* Bottom Navigation */}
       <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />

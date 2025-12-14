@@ -9,6 +9,10 @@ import {typography} from '../../theme/typography';
 import {radius} from '../../theme/radius';
 import {useWebSocket} from '../../hooks/useWebSocket';
 import {useRoomsStore} from '../../stores/roomsStore';
+import {useAgoraStore} from '../../stores/agoraStore';
+import {useAuthStore} from '../../stores/authStore';
+import {shareRoomLink} from '../../utils/shareUtils';
+import {useToastStore} from '../../stores/toastStore';
 
 interface Participant {
   id: string;
@@ -32,17 +36,81 @@ const RoomScreen: React.FC<RoomScreenProps> = ({
   onBack,
 }) => {
   const [timeLeft, setTimeLeft] = useState(272); // 4:32 in seconds
-  const [isMicOn, setIsMicOn] = useState(true);
   const [showVoteModal, setShowVoteModal] = useState(false);
+  const [voteTimer, setVoteTimer] = useState(10); // 10 saniye oylama süresi
   const {currentRoom, updateRoom} = useRoomsStore();
   const {joinRoom: wsJoinRoom, leaveRoom: wsLeaveRoom, on, off, voteExtension} = useWebSocket();
+  const {
+    isMuted,
+    remoteUsers,
+    joinChannel,
+    leaveChannel,
+    toggleMute,
+    error: agoraError,
+  } = useAgoraStore();
+  const {user} = useAuthStore();
+  const {showToast} = useToastStore();
+
+  // Agora WebRTC: Join channel when roomId is available
+  useEffect(() => {
+    if (!roomId) return;
+
+    const joinAgoraChannel = async () => {
+      try {
+        await joinChannel(roomId);
+      } catch (error) {
+        // Agora App ID yapılandırılmamış olabilir - bu normal, sadece log'la
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        if (errorMessage.includes('Agora App ID is not configured')) {
+          console.warn('Agora App ID yapılandırılmamış. Ses özellikleri çalışmayacak.');
+          // Uygulama çalışmaya devam edebilir, sadece ses özellikleri olmayacak
+        } else {
+          console.error('Failed to join Agora channel:', error);
+        }
+      }
+    };
+
+    joinAgoraChannel();
+
+    return () => {
+      leaveChannel().catch((error) => {
+        // Agora hatası kritik değil, sadece log'la
+        console.warn('Failed to leave Agora channel:', error);
+      });
+    };
+  }, [roomId, joinChannel, leaveChannel]);
 
   // WebSocket event handlers
   useEffect(() => {
     if (!roomId) return;
 
-    // Join room via WebSocket
-    wsJoinRoom(roomId);
+    // Join room via WebSocket (async, handle errors gracefully)
+    const joinRoomAsync = async () => {
+      try {
+        console.log(`[RoomScreen] Attempting to join room: ${roomId}`);
+        await wsJoinRoom(roomId);
+        console.log(`[RoomScreen] Successfully joined room: ${roomId}`);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        console.error('[RoomScreen] Failed to join room via WebSocket:', errorMessage, error);
+        
+        // Check if it's a connection timeout error
+        if (errorMessage.includes('timeout') || errorMessage.includes('Backend WebSocket server')) {
+          showToast({
+            type: 'warning',
+            message: 'WebSocket bağlantısı kurulamadı. Real-time özellikler çalışmayabilir. Backend server\'ın çalıştığından emin olun.',
+          });
+        } else {
+          // Show user-friendly error message
+          showToast({
+            type: 'error',
+            message: errorMessage || 'Odaya bağlanılamadı. Lütfen sayfayı yenileyin.',
+          });
+        }
+      }
+    };
+
+    joinRoomAsync();
 
     // Listen for room updates
     const handleRoomUpdate = (data: any) => {
@@ -58,17 +126,39 @@ const RoomScreen: React.FC<RoomScreenProps> = ({
       }
     };
 
-    on('room-update', handleRoomUpdate);
-    on('timer-update', handleTimerUpdate);
-
-    return () => {
-      off('room-update', handleRoomUpdate);
-      off('timer-update', handleTimerUpdate);
-      if (roomId) {
-        wsLeaveRoom(roomId);
+    // Listen for extension vote start (son 10 saniyede)
+    const handleExtensionVoteStart = (data: {roomId: string; timeLeft: number; message?: string}) => {
+      if (data.roomId === roomId) {
+        console.log(`[RoomScreen] Extension vote started for room ${roomId}, timeLeft: ${data.timeLeft}`);
+        setShowVoteModal(true);
+        setVoteTimer(10); // 10 saniye oylama süresi başlat
       }
     };
-  }, [roomId, wsJoinRoom, wsLeaveRoom, on, off, updateRoom]);
+
+    // Set up event listeners with error handling
+    try {
+      on('room-update', handleRoomUpdate);
+      on('timer-update', handleTimerUpdate);
+      on('extension-vote-start', handleExtensionVoteStart);
+    } catch (error) {
+      console.error('Failed to set up WebSocket event listeners:', error);
+    }
+
+    return () => {
+      try {
+        off('room-update', handleRoomUpdate);
+        off('timer-update', handleTimerUpdate);
+        off('extension-vote-start', handleExtensionVoteStart);
+        if (roomId) {
+          wsLeaveRoom(roomId).catch((error) => {
+            console.warn('Failed to leave room via WebSocket:', error);
+          });
+        }
+      } catch (error) {
+        console.warn('Error cleaning up WebSocket listeners:', error);
+      }
+    };
+  }, [roomId, wsJoinRoom, wsLeaveRoom, on, off, updateRoom, showToast]);
 
   // Update timeLeft from currentRoom
   useEffect(() => {
@@ -77,30 +167,54 @@ const RoomScreen: React.FC<RoomScreenProps> = ({
     }
   }, [currentRoom, roomId]);
 
-  // Participants from currentRoom
-  const participants: Participant[] = currentRoom?.participants.map((p) => ({
-    id: p.id,
-    name: p.name,
-    avatar: p.avatar,
-    isActiveSpeaker: false,
-    isMuted: false,
-  })) || [
-    {id: '1', name: 'Alice', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBqw3A6AVQlVdkOIjOr0QcEz7B1Oro4-IJyHlBmXRZZJumEBzZUnikN3Y0mbypIduNCHAEwvYq0gWx6_5rYcmcIfW4wKfDONrkQ2k461bxMXXd-sJZU_hnrGNWSBGN-IEL7qUyOHbYcrXrpmfKwYjmHnRWih761EBRCVhjJQPe8EPqF6nlch_kd8pPs6a4jo3fL_wrf8rAsPMcnd7x98nzJvA1xIvp8I_57WdLRrVm4CIA_1mbzwIRnfJQdIvVDDZN7LVRqhfKMxnE'},
-    {id: '2', name: 'David', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDvPNrky7iyWZy8Jtdf7ClH1eWO_ylsot99E9LBAS67GoOytQk_qSYhOzksiwE3TYg8uADZLrhxy1Awz7b3BgMUmkLaCb5Sj7IJU5P7tYBEUwCFQspg4IQ3sdLQ-2UVJEo8sU98jaL2V-gU4-bXVMYdtZ7gBV8IctwMZFuJ_bbxa_URMycLp5rRTCNGAF7WgrgyxwNn9lhEZMF_t_f_D8wJbyTiorgsnAjth_uHXCJUNyH7y0O5Rz3p3GFI8itNjkGqJEHFr5dBJDA', isActiveSpeaker: true},
-    {id: '3', name: 'Sarah', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBnIbGfZ53MIDg4vQGlxdY_9P25pAKdbBT1k_iENmp0SSkPl5af0Xw8mOVWydXaKwxY4itF2-pt_DZMhzzG9nTe7TZTGN6hIDhWJM1uHcgZKV4UvzktPc0yuhlDTVls3dAQLff3xTdOqkp7e9VhqvYBKwTv0vvII5_5kzQkyjN4aAIBmqjFaQyY1JhSHmbG0cTxyN1D363BMgMd_XgSNqvdcif7dLUd3iqQoZrcsf5y9FsC6X1h9wGr2PRvZc3QTd233xFNwwIIOGk'},
-    {id: '4', name: 'Jean-Paul', avatar: undefined},
-    {id: '5', name: 'Kenji', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCrCvwGCiQh3tcmiX7u3NYJ_btxqFvLSSTCow33ccnYvJ5G9tjbOqNOmxqSHtNXGTzqVfiQ2jEuT9B_JfQ0fsZl8Gb2qj8z-okcQUEmtxt5kzVBVzvDVxQ0Bh2NfVlds29P85GABF6oRBCeKqe5HF71gGz3BK4Hlkf0CsSRgqfKvh3I1EU7Pw7VvJ_5vayw0mC96lR-AQPgtLdyW6znjgHuUclbQCtwCp2kSRnLHICu0HvQ4WRmC2iXBEMM-7BblxLDQ0kfVpp55TM', isMuted: true},
-    {id: '6', name: 'Ghost', avatar: undefined},
-    {id: '7', name: 'Elena', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCUpavZDQDcQovXhiLaArzjYfVeZkqZzauF4BJb2OeDK3FbquwtdVdlnvNM0TlxKTJ6umj-Yroa2p2kIRQWo0LvBcq4UDaOCGAc9YJmFN3qo5VaZt5jiVzThDLvV0hxTa4IkMqhNpX_ezsMLBFBPym4xAEza7FjxmJmXQso6QYhT8vwSBAHJ2w41Hxfa2s4n_06iKFQSWVRJ7frlYN9FS2LKVAT5dpQqPHt-x_4aQ56IKXgTRoZE9DN7WQ-q-WwSBDDGjSlh9CIMxU'},
-  ]);
+  // Combine participants from currentRoom (backend) and remoteUsers (Agora)
+  const participants: Participant[] = React.useMemo(() => {
+    const roomParticipants = currentRoom?.participants || [];
+    
+    // Create a map of participants by ID for quick lookup
+    const participantMap = new Map<string, Participant>();
+    
+    // Add room participants from backend
+    roomParticipants.forEach((p) => {
+      participantMap.set(p.id, {
+        id: p.id,
+        name: p.name,
+        avatar: p.avatar,
+        isActiveSpeaker: false,
+        isMuted: false,
+      });
+    });
+    
+    // Update with Agora remote users data (mute state, etc.)
+    remoteUsers.forEach((remoteUser) => {
+      // Try to find matching participant by checking if UID matches any participant ID
+      // Note: In a real implementation, you might need to map Agora UIDs to user IDs
+      // For now, we'll update mute state for all participants if we have remote user data
+      const matchingParticipant = Array.from(participantMap.values()).find(
+        (p) => String(p.id) === String(remoteUser.uid)
+      );
+      
+      if (matchingParticipant) {
+        matchingParticipant.isMuted = remoteUser.muted || !remoteUser.hasAudio;
+        matchingParticipant.isActiveSpeaker = remoteUser.hasAudio && !remoteUser.muted;
+      }
+    });
+    
+    return Array.from(participantMap.values());
+  }, [currentRoom?.participants, remoteUsers]);
 
   // Timer countdown
+  // Oylama süresi timer'ı (10 saniye)
   useEffect(() => {
+    if (!showVoteModal) {
+      return;
+    }
+
     const interval = setInterval(() => {
-      setTimeLeft((prev) => {
+      setVoteTimer((prev) => {
         if (prev <= 1) {
-          // Show vote modal when time is up
-          setShowVoteModal(true);
+          // 10 saniye doldu, modal'ı kapat
+          setShowVoteModal(false);
           return 0;
         }
         return prev - 1;
@@ -108,7 +222,7 @@ const RoomScreen: React.FC<RoomScreenProps> = ({
     }, 1000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [showVoteModal]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -143,9 +257,31 @@ const RoomScreen: React.FC<RoomScreenProps> = ({
         <Text style={styles.headerTitle} numberOfLines={1}>
           {roomName}
         </Text>
-        <Pressable style={styles.headerButton} onPress={onLeave}>
-          <Icon name="logout" style={styles.headerIcon} />
-        </Pressable>
+        <View style={styles.headerRight}>
+          <Pressable
+            style={styles.headerButton}
+            onPress={async () => {
+              if (roomId) {
+                const success = await shareRoomLink(roomId, roomName);
+                if (success) {
+                  showToast({
+                    type: 'success',
+                    message: 'Room link copied to clipboard!',
+                  });
+                } else {
+                  showToast({
+                    type: 'error',
+                    message: 'Failed to share room link',
+                  });
+                }
+              }
+            }}>
+            <Icon name="share" style={styles.headerIcon} />
+          </Pressable>
+          <Pressable style={styles.headerButton} onPress={onLeave}>
+            <Icon name="logout" style={styles.headerIcon} />
+          </Pressable>
+        </View>
       </View>
 
       {/* Main Content Area */}
@@ -193,19 +329,25 @@ const RoomScreen: React.FC<RoomScreenProps> = ({
         <View style={styles.controlSpacer} />
         {/* Mic Toggle */}
         <Pressable
-          style={[styles.micButton, isMicOn ? styles.micButtonOn : styles.micButtonOff]}
-          onPress={() => setIsMicOn(!isMicOn)}>
-          <Icon name={isMicOn ? 'mic' : 'mic_off'} style={styles.micIcon} />
+          style={[styles.micButton, !isMuted ? styles.micButtonOn : styles.micButtonOff]}
+          onPress={() => toggleMute()}>
+          <Icon name={!isMuted ? 'mic' : 'mic_off'} style={styles.micIcon} />
         </Pressable>
         {/* Leave Button */}
         <View style={styles.controlSpacer}>
           <Pressable
             style={styles.leaveButton}
-            onPress={() => {
-              if (roomId) {
-                wsLeaveRoom(roomId);
+            onPress={async () => {
+              try {
+                if (roomId) {
+                  wsLeaveRoom(roomId);
+                  await leaveChannel();
+                }
+                onLeave?.();
+              } catch (error) {
+                console.error('Error leaving room:', error);
+                onLeave?.();
               }
-              onLeave?.();
             }}>
             <View style={styles.leaveButtonInner}>
               <Icon name="call_end" style={styles.leaveIcon} />
@@ -229,6 +371,7 @@ const RoomScreen: React.FC<RoomScreenProps> = ({
             }
             setShowVoteModal(false);
           }}
+          timeLeft={voteTimer}
         />
       )}
     </View>
@@ -269,6 +412,11 @@ const styles = StyleSheet.create({
     paddingTop: spacing.xxl,
     paddingBottom: spacing.sm,
     zIndex: 20,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
   },
   headerButton: {
     width: 40,
@@ -345,9 +493,16 @@ const styles = StyleSheet.create({
     fontSize: 36,
     fontWeight: 'bold',
     color: '#fff',
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: {width: 0, height: 2},
-    textShadowRadius: 4,
+    ...Platform.select({
+      web: {
+        textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)' as any,
+      },
+      default: {
+        textShadowColor: 'rgba(0, 0, 0, 0.3)',
+        textShadowOffset: {width: 0, height: 2},
+        textShadowRadius: 4,
+      },
+    }),
   },
   avatarWrapper: {
     position: 'absolute',
@@ -450,7 +605,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     ...Platform.select({
       web: {
-        background: 'linear-gradient(to top, #0F172A, transparent)',
+        backgroundImage: 'linear-gradient(to top, #0F172A, transparent)',
       },
     }),
     pointerEvents: 'none',

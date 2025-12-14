@@ -1,6 +1,7 @@
 import {prisma} from '../lib/prisma';
 import {HttpError} from '../errors';
 import {AddFriendInput} from '../schemas/friends';
+import {badgeService, XP_REWARDS} from './badgeService';
 
 export class FriendsService {
   /**
@@ -79,6 +80,14 @@ export class FriendsService {
         },
       ],
     });
+
+    // XP ver (arkadaş eklendi)
+    try {
+      await badgeService.addXP(userId, XP_REWARDS.FRIEND_ADDED, 'friend-added');
+    } catch (error) {
+      // XP hatası olsa bile devam et
+      console.error('Error adding XP for friend added:', error);
+    }
 
     return {
       success: true,

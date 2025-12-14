@@ -1,5 +1,6 @@
 import React, {useState, useEffect} from 'react';
 import {View, Text, StyleSheet, ScrollView, Pressable, Platform, RefreshControl, Alert} from 'react-native';
+import {useNavigate} from 'react-router-dom';
 import Icon from '../../components/common/Icon';
 import Avatar from '../../components/common/Avatar';
 import BottomNav from '../../components/ui/BottomNav';
@@ -17,6 +18,7 @@ const FriendsScreen: React.FC<FriendsScreenProps> = ({onTabChange}) => {
   const [activeTab, setActiveTab] = useState<'friends' | 'requests'>('friends');
   const [activeNavTab, setActiveNavTab] = useState<'home' | 'friends' | 'profile' | 'settings'>('friends');
   const {friends, loading, fetchFriends, addFriend, removeFriend} = useFriendsStore();
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchFriends();
@@ -25,6 +27,9 @@ const FriendsScreen: React.FC<FriendsScreenProps> = ({onTabChange}) => {
   const handleNavTabChange = (tab: 'home' | 'friends' | 'profile' | 'settings') => {
     setActiveNavTab(tab);
     onTabChange?.(tab);
+    // Navigate to the selected tab
+    console.log(`[FriendsScreen] Navigating to tab: ${tab}`);
+    navigate(`/${tab}`);
   };
 
   const handleRefresh = () => {

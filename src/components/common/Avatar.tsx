@@ -5,6 +5,7 @@ import {colors} from '../../theme/colors';
 interface AvatarProps {
   name: string;
   avatar?: string;
+  uri?: string; // Alias for avatar prop for compatibility
   size?: number;
   showBorder?: boolean;
 }
@@ -12,9 +13,12 @@ interface AvatarProps {
 const Avatar: React.FC<AvatarProps> = ({
   name,
   avatar,
+  uri,
   size = 40,
   showBorder = false,
 }) => {
+  // Use uri if provided, otherwise use avatar
+  const avatarUri = uri || avatar;
   const initials = name
     .split(' ')
     .map((n) => n[0])
@@ -33,9 +37,9 @@ const Avatar: React.FC<AvatarProps> = ({
           borderWidth: showBorder ? 2 : 0,
         },
       ]}>
-      {avatar ? (
+      {avatarUri ? (
         <Image
-          source={{uri: avatar}}
+          source={{uri: avatarUri}}
           style={[styles.image, {width: size, height: size, borderRadius: size / 2}]}
         />
       ) : (

@@ -1,6 +1,7 @@
 import {useEffect, useRef} from 'react';
 import {websocketClient} from '../lib/websocketClient';
 import {useAuthStore} from '../stores/authStore';
+import {useWebSocketEventStore} from '../stores/websocketEventStore';
 
 interface UseWebSocketOptions {
   onConnect?: () => void;
@@ -12,6 +13,7 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
   const {isAuthenticated} = useAuthStore();
   const {onConnect, onDisconnect, onError} = options;
   const callbacksRef = useRef(options);
+  const setupListeners = useWebSocketEventStore((state) => state.setupListeners);
 
   // Update callbacks ref when options change
   useEffect(() => {
@@ -36,6 +38,8 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
 
         socket.on('connect', () => {
           callbacksRef.current.onConnect?.();
+          // Setup event listeners when connected
+          setupListeners();
         });
 
         socket.on('disconnect', () => {
@@ -63,12 +67,54 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
   return {
     socket: websocketClient.getSocket(),
     isConnected: websocketClient.isConnected(),
-    joinRoom: websocketClient.joinRoom.bind(websocketClient),
-    leaveRoom: websocketClient.leaveRoom.bind(websocketClient),
-    voteExtension: websocketClient.voteExtension.bind(websocketClient),
-    joinMatching: websocketClient.joinMatching.bind(websocketClient),
-    leaveMatching: websocketClient.leaveMatching.bind(websocketClient),
-    getMatchingStatus: websocketClient.getMatchingStatus.bind(websocketClient),
+    joinRoom: async (roomId: string) => {
+      try {
+        await websocketClient.joinRoom(roomId);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        console.error('WebSocket joinRoom error:', errorMessage, error);
+        throw new Error(`Odaya bağlanılamadı: ${errorMessage}`);
+      }
+    },
+    leaveRoom: async (roomId: string) => {
+      try {
+        await websocketClient.leaveRoom(roomId);
+      } catch (error) {
+        console.warn('WebSocket leaveRoom error:', error);
+        // Don't throw, leaving room is not critical
+      }
+    },
+    voteExtension: async (roomId: string, vote: 'yes' | 'no') => {
+      try {
+        await websocketClient.voteExtension(roomId, vote);
+      } catch (error) {
+        console.error('WebSocket voteExtension error:', error);
+        throw error;
+      }
+    },
+    joinMatching: async () => {
+      try {
+        await websocketClient.joinMatching();
+      } catch (error) {
+        console.error('WebSocket joinMatching error:', error);
+        throw error;
+      }
+    },
+    leaveMatching: async () => {
+      try {
+        await websocketClient.leaveMatching();
+      } catch (error) {
+        console.warn('WebSocket leaveMatching error:', error);
+      }
+    },
+    getMatchingStatus: async () => {
+      try {
+        await websocketClient.getMatchingStatus();
+      } catch (error) {
+        console.error('WebSocket getMatchingStatus error:', error);
+        throw error;
+      }
+    },
     on: websocketClient.on.bind(websocketClient),
     off: websocketClient.off.bind(websocketClient),
   };

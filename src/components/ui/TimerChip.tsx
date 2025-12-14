@@ -36,7 +36,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
     color: colors.primaryIndigo,
-    fontVariant: ['tabular-nums'],
+    fontVariant: 'tabular-nums',
   },
 });
 

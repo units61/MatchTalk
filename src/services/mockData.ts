@@ -83,3 +83,13 @@ export const mockFriends: User[] = [mockUsers[0], mockUsers[1], mockUsers[2]];
 
 
 
+
+
+
+
+
+
+
+
+
+

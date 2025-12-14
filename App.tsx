@@ -1,13 +1,21 @@
 import React from 'react';
 import {View, StyleSheet} from 'react-native';
-import AppNavigator from './src/navigation/AppNavigator';
+import {BrowserRouter} from 'react-router-dom';
+import AppRouter from './src/router/AppRouter';
+import ErrorBoundary from './src/components/common/ErrorBoundary';
+import ToastContainer from './src/components/ui/ToastContainer';
 import {colors} from './src/theme/colors';
 
 const App: React.FC = () => {
   return (
-    <View style={styles.container}>
-      <AppNavigator />
-    </View>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <View style={styles.container}>
+          <AppRouter />
+          <ToastContainer />
+        </View>
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 };
 
