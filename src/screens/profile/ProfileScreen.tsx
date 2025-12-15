@@ -273,7 +273,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({onTabChange}) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.backgroundDarkMain,
+    backgroundColor: '#0b0d17',
     ...Platform.select({
       web: {
         minHeight: '100vh' as any,
@@ -281,7 +281,7 @@ const styles = StyleSheet.create({
     }),
   },
   header: {
-    backgroundColor: '#6467f2', // Fallback for non-web platforms
+    backgroundColor: '#0b0d17', // Fallback for non-web platforms
     paddingTop: spacing.xxl + spacing.md,
     paddingBottom: spacing.xxl,
     paddingHorizontal: spacing.xl,
@@ -317,7 +317,7 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#fff',
+    color: '#e2e8f0',
   },
   userLevel: {
     fontSize: 16,
@@ -369,14 +369,14 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: colors.cardDark,
+    backgroundColor: '#0f172a',
     borderRadius: radius.lg,
     padding: spacing.md,
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.xs / 2,
     borderWidth: 1,
-    borderColor: 'rgba(148, 163, 184, 0.5)',
+    borderColor: '#1f2937',
   },
   statValue: {
     fontSize: 24,
@@ -389,7 +389,7 @@ const styles = StyleSheet.create({
   statLabel: {
     fontSize: 12,
     fontWeight: '500',
-    color: colors.textSecondary,
+    color: '#94a3b8',
   },
   badgesSection: {
     gap: spacing.md,
@@ -403,12 +403,12 @@ const styles = StyleSheet.create({
   badgesTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: colors.textPrimary,
+    color: '#e2e8f0',
   },
   seeAllText: {
     fontSize: 14,
     fontWeight: '500',
-    color: colors.primaryIndigo,
+    color: '#6366f1',
   },
   badgesGrid: {
     flexDirection: 'row',
@@ -422,14 +422,15 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     alignItems: 'center',
     gap: spacing.sm,
-    backgroundColor: colors.cardDark,
+    backgroundColor: '#0f172a',
     borderRadius: radius.lg,
     padding: spacing.md,
     borderWidth: 1,
-    borderColor: 'rgba(148, 163, 184, 0.5)',
+    borderColor: '#1f2937',
   },
   badgeCardLocked: {
     opacity: 0.5,
+    backgroundColor: '#0b0d17',
   },
   badgeIconContainer: {
     width: 48,
@@ -474,14 +475,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: colors.cardDark,
+    backgroundColor: '#0f172a',
     borderRadius: radius.lg,
     padding: spacing.md,
     borderWidth: 1,
-    borderColor: 'rgba(148, 163, 184, 0.5)',
+    borderColor: '#1f2937',
   },
   menuItemPressed: {
-    backgroundColor: '#334155',
+    backgroundColor: '#111827',
   },
   menuItemLeft: {
     flexDirection: 'row',
@@ -493,19 +494,19 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 8,
-    backgroundColor: 'rgba(100, 116, 139, 0.5)',
+    backgroundColor: 'rgba(99, 102, 241, 0.18)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   menuIcon: {
     fontSize: 20,
-    color: '#94a3b8',
+    color: '#c7d2fe',
   },
   menuText: {
     flex: 1,
     fontSize: 15,
     fontWeight: '500',
-    color: colors.textPrimary,
+    color: '#e2e8f0',
   },
   chevronIcon: {
     fontSize: 20,

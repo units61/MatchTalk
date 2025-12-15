@@ -52,9 +52,9 @@ const BottomNav: React.FC<BottomNavProps> = ({activeTab, onTabChange}) => {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#fff',
+    backgroundColor: '#0f172a',
     borderTopWidth: 1,
-    borderTopColor: '#e2e8f0',
+    borderTopColor: '#1e293b',
     height: 84,
     paddingBottom: spacing.xl,
     paddingHorizontal: spacing.xl,

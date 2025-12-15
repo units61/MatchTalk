@@ -252,7 +252,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({onTabChange, onBack}) =>
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f6f6f8', // background-light
+    backgroundColor: '#0b0d17',
   },
   header: {
     flexDirection: 'row',
@@ -261,7 +261,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16, // px-4
     paddingTop: 24, // pt-6
     paddingBottom: 16, // pb-4
-    backgroundColor: '#f6f6f8', // background-light
+    backgroundColor: '#0b0d17',
     ...(Platform.OS === 'web' ? {
       position: 'sticky' as any,
       top: 0,
@@ -293,12 +293,12 @@ const styles = StyleSheet.create({
   },
   backIcon: {
     fontSize: 24,
-    color: '#000', // text-black
+    color: '#e2e8f0',
   },
   headerTitle: {
     fontSize: 24, // text-2xl
     fontWeight: '700', // font-bold
-    color: '#000', // text-black
+    color: '#e2e8f0',
     flex: 1,
     textAlign: 'center',
     paddingRight: 40, // pr-10
@@ -345,7 +345,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#fff', // bg-white (dark: bg-surface-dark)
+    backgroundColor: '#0f172a', // dark surface
     padding: 16, // p-4
     borderRadius: 12, // rounded-xl (0.75rem)
     ...Platform.select({
@@ -353,13 +353,13 @@ const styles = StyleSheet.create({
         transition: 'background-color 0.15s',
         cursor: 'pointer',
         ':active': {
-          backgroundColor: '#f3f4f6', // active:bg-gray-100
+          backgroundColor: '#111827', // dark active
         },
       },
     }),
   },
   menuItemPressed: {
-    backgroundColor: '#f3f4f6', // active:bg-gray-100 (dark: active:bg-slate-700)
+    backgroundColor: '#111827', // dark active
   },
   menuItemLeft: {
     flexDirection: 'row',
@@ -376,14 +376,14 @@ const styles = StyleSheet.create({
     width: 40, // size-10
     height: 40,
     borderRadius: 8, // rounded-lg
-    backgroundColor: 'rgba(64, 64, 242, 0.1)', // bg-primary/10
+    backgroundColor: 'rgba(99, 102, 241, 0.16)', // bg-primary/10
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
   },
   menuIcon: {
     fontSize: 20,
-    color: '#4040f2', // text-primary
+    color: '#c7d2fe', // text-primary
   },
   menuTextContainer: {
     flex: 1,
@@ -391,7 +391,7 @@ const styles = StyleSheet.create({
   menuTitle: {
     fontSize: 15, // text-[15px]
     fontWeight: '500', // font-medium
-    color: '#111827', // text-gray-900 (dark: text-white)
+    color: '#e2e8f0', // text-gray-900 (dark: text-white)
   },
   menuSubtitle: {
     fontSize: 14, // text-sm
@@ -405,7 +405,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#fff', // bg-white (dark: bg-surface-dark)
+    backgroundColor: '#0f172a', // dark surface
     padding: 16, // p-4
     borderRadius: 12, // rounded-xl
   },
@@ -422,19 +422,19 @@ const styles = StyleSheet.create({
     width: 48, // w-12
     height: 32, // h-8
     borderRadius: 16, // rounded-full
-    backgroundColor: '#d1d5db', // bg-gray-300 (dark: bg-slate-600)
+    backgroundColor: '#1f2937', // dark track
     padding: 4, // border-4
     justifyContent: 'center',
     position: 'relative',
   },
   toggleContainerActive: {
-    backgroundColor: '#4040f2', // primary color when checked
+    backgroundColor: '#6366f1', // primary color when checked
   },
   toggleThumb: {
     width: 24, // w-6
     height: 24, // h-6
     borderRadius: 12, // rounded-full
-    backgroundColor: '#fff',
+    backgroundColor: '#0b0d17',
     position: 'absolute',
     left: 4, // left-1
     top: 4, // top-1
@@ -447,30 +447,24 @@ const styles = StyleSheet.create({
   },
   toggleThumbActive: {
     transform: [{translateX: 20}], // translateX(100%) = 24px (thumb width) - 4px (left) = 20px
+    backgroundColor: '#0b0d17',
   },
   dangerButton: {
-    backgroundColor: '#fff', // bg-white (dark: bg-surface-dark)
+    backgroundColor: '#1f2937',
     padding: 16, // p-4
     borderRadius: 12, // rounded-xl
     alignItems: 'center',
     justifyContent: 'center',
-    ...Platform.select({
-      web: {
-        transition: 'background-color 0.15s',
-        cursor: 'pointer',
-        ':active': {
-          backgroundColor: '#f3f4f6', // active:bg-gray-100
-        },
-      },
-    }),
+    borderWidth: 1,
+    borderColor: '#ef4444',
   },
   dangerButtonPressed: {
-    backgroundColor: '#f3f4f6', // active:bg-gray-100 (dark: active:bg-slate-700)
+    backgroundColor: '#111827', // active dark
   },
   dangerButtonText: {
     fontSize: 15, // text-[15px]
-    fontWeight: '500', // font-medium
-    color: '#ef4444', // text-red-500
+    fontWeight: '600', // font-medium
+    color: '#fca5a5', // soft red
   },
   versionContainer: {
     width: '100%',
@@ -480,50 +474,50 @@ const styles = StyleSheet.create({
   },
   versionText: {
     fontSize: 11, // text-xs
-    color: 'rgba(148, 163, 184, 0.5)', // text-text-secondary/50
+    color: '#94a3b8', // text-text-secondary
   },
   // Dark mode styles
   containerDark: {
-    backgroundColor: '#0F172A', // background-dark
+    backgroundColor: '#0b0d17', // background-dark
   },
   headerDark: {
-    backgroundColor: 'rgba(15, 23, 42, 0.95)', // background-dark/95
+    backgroundColor: 'rgba(11, 13, 23, 0.95)', // background-dark/95
   },
   headerTitleDark: {
-    color: '#fff', // text-white
+    color: '#e2e8f0', // text-white
   },
   backIconDark: {
-    color: '#fff', // text-white
+    color: '#e2e8f0', // text-white
   },
   sectionTitleDark: {
     color: '#94A3B8', // text-text-secondary
   },
   menuItemDark: {
-    backgroundColor: '#1E293B', // bg-surface-dark
+    backgroundColor: '#0f172a', // bg-surface-dark
   },
   menuIconContainerDark: {
-    backgroundColor: '#475569', // bg-slate-700
+    backgroundColor: '#111827', // bg-slate-700
   },
   menuIconDark: {
-    color: '#fff', // text-white
+    color: '#c7d2fe', // text-white
   },
   menuTitleDark: {
-    color: '#fff', // text-white
+    color: '#e2e8f0', // text-white
   },
   menuSubtitleDark: {
     color: '#94A3B8', // text-text-secondary
   },
   toggleItemDark: {
-    backgroundColor: '#1E293B', // bg-surface-dark
+    backgroundColor: '#0f172a', // bg-surface-dark
   },
   toggleContainerDark: {
-    backgroundColor: '#475569', // bg-slate-600
+    backgroundColor: '#1f2937', // bg-slate-600
   },
   dangerButtonDark: {
-    backgroundColor: '#1E293B', // bg-surface-dark
+    backgroundColor: '#1f2937', // bg-surface-dark
   },
   versionTextDark: {
-    color: 'rgba(148, 163, 184, 0.5)', // text-text-secondary/50
+    color: '#94a3b8', // text-text-secondary/50
   },
 });
 

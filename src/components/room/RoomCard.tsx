@@ -107,16 +107,16 @@ const RoomCardComponent: React.FC<RoomCardProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#fff',
+    backgroundColor: '#0f172a',
     borderRadius: radius.xl,
     padding: spacing.xl,
     marginBottom: spacing.md,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 1},
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
+    shadowColor: '#0f172a',
+    shadowOffset: {width: 0, height: 12},
+    shadowOpacity: 0.22,
+    shadowRadius: 20,
     borderWidth: 1,
-    borderColor: '#f1f5f9',
+    borderColor: '#1e293b',
   },
   header: {
     flexDirection: 'row',
@@ -130,12 +130,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: '600',
-    color: colors.textPrimary,
+    color: '#ffffff',
     marginBottom: spacing.xs / 2,
   },
   category: {
     fontSize: 14,
-    color: colors.textMuted,
+    color: '#94a3b8',
     marginTop: 2,
   },
   avatarsContainer: {
@@ -147,7 +147,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingTop: spacing.md,
     borderTopWidth: 1,
-    borderTopColor: '#f1f5f9',
+    borderTopColor: '#1e293b',
   },
   participantsCount: {
     flexDirection: 'row',
@@ -156,23 +156,27 @@ const styles = StyleSheet.create({
   },
   groupIcon: {
     fontSize: 20,
-    color: colors.textSecondary,
+    color: '#94a3b8',
   },
   countText: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.textSecondary,
+    color: '#cbd5e1',
   },
   joinButton: {
-    backgroundColor: '#f1f5f9',
+    backgroundColor: '#6366f1',
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.xl,
     borderRadius: radius.full,
+    shadowColor: '#6366f1',
+    shadowOffset: {width: 0, height: 6},
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
   },
   joinButtonText: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.textPrimary,
+    color: '#0f111a',
   },
 });
 

@@ -35,7 +35,7 @@ const FAB: React.FC<FABProps> = ({onPress, label = 'Yeni Odaya Katıl'}) => {
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    bottom: 90,
+    bottom: 100,
     left: 0,
     right: 0,
     alignItems: 'center',
@@ -50,20 +50,20 @@ const styles = StyleSheet.create({
   },
   button: {
     width: '100%',
-    maxWidth: 400,
-    height: 64,
-    backgroundColor: colors.primaryIndigo,
-    borderRadius: radius.full,
+    maxWidth: 420,
+    height: 70,
+    backgroundColor: '#6366f1',
+    borderRadius: 24,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.md,
-    shadowColor: colors.primaryIndigo,
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
+    shadowColor: '#6366f1',
+    shadowOffset: {width: 0, height: 12},
+    shadowOpacity: 0.32,
+    shadowRadius: 20,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: 'rgba(255, 255, 255, 0.08)',
     ...Platform.select({
       web: {
         cursor: 'pointer',
@@ -75,12 +75,12 @@ const styles = StyleSheet.create({
   },
   icon: {
     fontSize: 28,
-    color: '#fff',
+    color: '#0b0d17',
   },
   label: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#fff',
+    color: '#0b0d17',
     letterSpacing: 0.5,
   },
 });

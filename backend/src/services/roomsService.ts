@@ -1,3 +1,4 @@
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { prisma } from '../lib/prisma';
 import { HttpError } from '../errors';
 import { CreateRoomInput, JoinRoomInput } from '../schemas/rooms';
@@ -256,12 +257,20 @@ export class RoomsService {
       throw new HttpError(404, 'Bu odada değilsiniz');
     }
 
-    // Odadan ayrıl
-    await prisma.roomParticipant.delete({
-      where: {
-        id: participation.id,
-      },
-    });
+    // Odadan ayrıl (yarış koşullarında P2025'i yakala)
+    try {
+      await prisma.roomParticipant.delete({
+        where: {
+          id: participation.id,
+        },
+      });
+    } catch (error) {
+      if (error instanceof PrismaClientKnownRequestError && error.code === 'P2025') {
+        // Kayıt silinemedi çünkü zaten yok: çağrıyı idempotent hale getir
+        throw new HttpError(404, 'Bu odada değilsiniz');
+      }
+      throw error;
+    }
 
     // Eğer odada kimse kalmadıysa odayı sil
     const remainingParticipants = await prisma.roomParticipant.count({

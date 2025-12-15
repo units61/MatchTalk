@@ -266,7 +266,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({onTabChange}) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.backgroundLightMain,
+    backgroundColor: '#0b0d17',
   },
   header: {
     flexDirection: 'row',
@@ -274,7 +274,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: spacing.xl,
     paddingVertical: spacing.xl,
-    backgroundColor: colors.backgroundLightMain,
+    backgroundColor: '#0b0d17',
     zIndex: 10,
   },
   logoContainer: {
@@ -286,7 +286,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: colors.primaryIndigo,
+    backgroundColor: '#6366f1',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -297,7 +297,7 @@ const styles = StyleSheet.create({
   logoText: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: colors.textPrimary,
+    color: '#e2e8f0',
   },
   headerActions: {
     flexDirection: 'row',
@@ -311,7 +311,7 @@ const styles = StyleSheet.create({
   },
   notificationIcon: {
     fontSize: 24,
-    color: colors.textMuted,
+    color: '#94a3b8',
   },
   badge: {
     position: 'absolute',
@@ -322,7 +322,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     backgroundColor: '#ef4444',
     borderWidth: 2,
-    borderColor: colors.backgroundLightMain,
+    borderColor: '#0b0d17',
   },
   profileButton: {
     borderRadius: radius.full,
@@ -351,12 +351,12 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: colors.textPrimary,
+    color: '#e2e8f0',
   },
   seeAllText: {
     fontSize: 14,
     fontWeight: '500',
-    color: colors.primaryIndigo,
+    color: '#6366f1',
   },
   loadingIndicator: {
     alignItems: 'center',
@@ -376,16 +376,16 @@ const styles = StyleSheet.create({
   },
   emptyIcon: {
     fontSize: 64,
-    color: colors.textMuted,
+    color: '#475569',
   },
   emptyText: {
     fontSize: 18,
     fontWeight: '600',
-    color: colors.textPrimary,
+    color: '#e2e8f0',
   },
   emptySubtext: {
     fontSize: 14,
-    color: colors.textSecondary,
+    color: '#94a3b8',
     textAlign: 'center',
   },
   skeletonCard: {

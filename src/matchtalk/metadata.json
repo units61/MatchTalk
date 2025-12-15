@@ -1,0 +1,8 @@
+{
+  "name": "MatchTalk",
+  "description": "A premium voice chat and social discovery application featuring real-time rooms, matching, and profiles.",
+  "requestFramePermissions": [
+    "microphone",
+    "camera"
+  ]
+}

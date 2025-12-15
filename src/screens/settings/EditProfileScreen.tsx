@@ -74,7 +74,7 @@ const EditProfileScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.backgroundLightMain,
+    backgroundColor: '#0b0d17',
   },
   header: {
     flexDirection: 'row',
@@ -83,7 +83,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
     paddingVertical: spacing.lg,
     borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
+    borderBottomColor: '#1f2937',
+    backgroundColor: '#0b0d17',
   },
   backButton: {
     width: 40,
@@ -94,12 +95,12 @@ const styles = StyleSheet.create({
   },
   backIcon: {
     fontSize: 22,
-    color: colors.textPrimary,
+    color: '#e2e8f0',
   },
   headerTitle: {
     ...typography.heading,
     fontSize: 20,
-    color: colors.textPrimary,
+    color: '#e2e8f0',
     flex: 1,
     textAlign: 'center',
   },
@@ -113,30 +114,34 @@ const styles = StyleSheet.create({
   },
   label: {
     ...typography.bodyBold,
-    color: colors.textPrimary,
+    color: '#e2e8f0',
   },
   input: {
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: '#1f2937',
     borderRadius: radius.md,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    backgroundColor: '#fff',
-    color: colors.textPrimary,
+    backgroundColor: '#0f172a',
+    color: '#e2e8f0',
   },
   textArea: {
     height: 120,
     textAlignVertical: 'top',
   },
   saveButton: {
-    backgroundColor: colors.primary,
+    backgroundColor: '#6366f1',
     borderRadius: radius.full,
     paddingVertical: spacing.md,
     alignItems: 'center',
+    shadowColor: '#6366f1',
+    shadowOffset: {width: 0, height: 8},
+    shadowOpacity: 0.28,
+    shadowRadius: 14,
   },
   saveButtonText: {
     ...typography.bodyBold,
-    color: '#fff',
+    color: '#0b0d17',
   },
 });
 

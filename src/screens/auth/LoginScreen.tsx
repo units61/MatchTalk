@@ -263,7 +263,7 @@ const LoginScreen: React.FC<Props> = ({onSwitch, onLogin}) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.backgroundLight,
+    backgroundColor: '#0b0d17',
     ...Platform.select({
       web: {
         minHeight: '100vh',
@@ -285,7 +285,7 @@ const styles = StyleSheet.create({
     width: '80%',
     height: '40%',
     borderRadius: 9999,
-    backgroundColor: 'rgba(249, 245, 6, 0.2)',
+    backgroundColor: 'rgba(99, 102, 241, 0.25)',
     ...Platform.select({
       web: {
         filter: 'blur(100px)',
@@ -299,7 +299,7 @@ const styles = StyleSheet.create({
     width: '60%',
     height: '30%',
     borderRadius: 9999,
-    backgroundColor: 'rgba(249, 245, 6, 0.1)',
+    backgroundColor: 'rgba(99, 102, 241, 0.15)',
     ...Platform.select({
       web: {
         filter: 'blur(80px)',
@@ -312,7 +312,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: spacing.xl,
     paddingVertical: spacing.xxl,
-    maxWidth: 400,
+    maxWidth: 420,
     width: '100%',
     alignSelf: 'center',
     zIndex: 1,
@@ -325,12 +325,12 @@ const styles = StyleSheet.create({
   logoContainer: {
     width: 80,
     height: 80,
-    backgroundColor: colors.primary,
+    backgroundColor: '#6366f1',
     borderRadius: radius.lg,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.lg,
-    shadowColor: colors.primary,
+    shadowColor: '#6366f1',
     shadowOffset: {width: 0, height: 4},
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -338,20 +338,20 @@ const styles = StyleSheet.create({
   },
   logoIcon: {
     fontSize: 36,
-    color: '#000',
+    color: '#0b0d17',
     fontWeight: 'bold',
   },
   title: {
     ...typography.h1,
     fontSize: 32,
-    color: colors.textPrimary,
+    color: '#e2e8f0',
     textAlign: 'center',
     marginBottom: spacing.sm,
   },
   subtitle: {
     fontSize: 18,
     fontWeight: '500',
-    color: colors.textSecondary,
+    color: '#94a3b8',
     textAlign: 'center',
   },
   form: {
@@ -363,7 +363,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.textPrimary,
+    color: '#e2e8f0',
     paddingLeft: spacing.xs,
   },
   inputWrapper: {
@@ -378,10 +378,10 @@ const styles = StyleSheet.create({
     paddingRight: 48,
     borderRadius: radius.full,
     borderWidth: 1,
-    borderColor: colors.borderLight,
-    backgroundColor: '#fff',
+    borderColor: '#1f2937',
+    backgroundColor: '#0f172a',
     fontSize: 16,
-    color: colors.textPrimary,
+    color: '#e2e8f0',
   },
   inputIcon: {
     position: 'absolute',
@@ -401,7 +401,7 @@ const styles = StyleSheet.create({
   },
   icon: {
     fontSize: 20,
-    color: colors.textSecondary,
+    color: '#94a3b8',
   },
   forgotPassword: {
     alignItems: 'flex-end',
@@ -410,18 +410,18 @@ const styles = StyleSheet.create({
   forgotPasswordText: {
     fontSize: 14,
     fontWeight: '500',
-    color: colors.textSecondary,
+    color: '#94a3b8',
   },
   loginButton: {
     width: '100%',
     height: 56,
-    backgroundColor: colors.primary,
+    backgroundColor: '#6366f1',
     borderRadius: radius.full,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: spacing.md,
-    shadowColor: colors.primary,
+    shadowColor: '#6366f1',
     shadowOffset: {width: 0, height: 4},
     shadowOpacity: 0.2,
     shadowRadius: 8,
@@ -429,14 +429,14 @@ const styles = StyleSheet.create({
   loginButtonText: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#000',
+    color: '#0b0d17',
   },
   buttonIconContainer: {
     marginLeft: spacing.sm,
   },
   buttonIcon: {
     fontSize: 20,
-    color: '#000',
+    color: '#0b0d17',
   },
   footer: {
     marginTop: 'auto',
@@ -446,14 +446,14 @@ const styles = StyleSheet.create({
   footerText: {
     fontSize: 14,
     fontWeight: '500',
-    color: colors.textSecondary,
+    color: '#94a3b8',
     textAlign: 'center',
   },
   footerLink: {
-    color: colors.textPrimary,
+    color: '#e2e8f0',
     fontWeight: 'bold',
     textDecorationLine: 'underline',
-    textDecorationColor: colors.primary,
+    textDecorationColor: '#6366f1',
   },
   loginButtonDisabled: {
     opacity: 0.6,

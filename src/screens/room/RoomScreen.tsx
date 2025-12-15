@@ -418,7 +418,7 @@ const RoomScreen: React.FC<RoomScreenProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.backgroundDark,
+    backgroundColor: '#0b0d17',
     ...Platform.select({
       web: {
         minHeight: '100vh',
@@ -433,7 +433,7 @@ const styles = StyleSheet.create({
     height: 256,
     marginTop: -128,
     marginLeft: -128,
-    backgroundColor: `${colors.primary}33`,
+    backgroundColor: 'rgba(99, 102, 241, 0.22)',
     borderRadius: 128,
     ...Platform.select({
       web: {
@@ -464,13 +464,13 @@ const styles = StyleSheet.create({
   },
   headerIcon: {
     fontSize: 28,
-    color: '#fff',
+    color: '#e2e8f0',
   },
   headerTitle: {
     flex: 1,
     fontSize: 18,
     fontWeight: '600',
-    color: '#fff',
+    color: '#e2e8f0',
     textAlign: 'center',
     paddingHorizontal: spacing.md,
   },
@@ -509,7 +509,7 @@ const styles = StyleSheet.create({
     height: 144,
     borderRadius: 72,
     borderWidth: 4,
-    borderColor: `${colors.textSecondary}50`,
+    borderColor: 'rgba(148, 163, 184, 0.5)',
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
@@ -521,20 +521,20 @@ const styles = StyleSheet.create({
     height: '100%',
     borderRadius: 72,
     borderWidth: 4,
-    borderColor: `${colors.textSecondary}50`,
+    borderColor: 'rgba(148, 163, 184, 0.35)',
   },
   progressRingFill: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     height: '100%',
-    backgroundColor: colors.primary,
-    opacity: 0.3,
+    backgroundColor: '#6366f1',
+    opacity: 0.32,
   },
   timerText: {
     fontSize: 36,
     fontWeight: 'bold',
-    color: '#fff',
+    color: '#e2e8f0',
     ...Platform.select({
       web: {
         textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)' as any,
@@ -560,19 +560,19 @@ const styles = StyleSheet.create({
     borderRadius: 40,
     borderWidth: 2,
     borderStyle: 'dashed',
-    borderColor: colors.textSecondary,
-    backgroundColor: `${colors.textSecondary}20`,
+    borderColor: 'rgba(148, 163, 184, 0.6)',
+    backgroundColor: 'rgba(148, 163, 184, 0.12)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   inviteIcon: {
     fontSize: 28,
-    color: colors.textSecondary,
+    color: '#cbd5e1',
   },
   inviteText: {
     marginTop: spacing.xs,
     fontSize: 12,
-    color: colors.textSecondary,
+    color: '#94a3b8',
     fontWeight: '500',
   },
   bottomControls: {

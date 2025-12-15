@@ -390,7 +390,7 @@ const RegisterScreen: React.FC<Props> = ({onSwitch, onRegisterSuccess}) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.backgroundLight,
+    backgroundColor: '#0b0d17',
     ...Platform.select({
       web: {
         minHeight: '100vh',
@@ -415,12 +415,12 @@ const styles = StyleSheet.create({
   },
   backIcon: {
     fontSize: 24,
-    color: colors.textSecondary,
+    color: '#94a3b8',
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: colors.textPrimary,
+    color: '#e2e8f0',
   },
   headerSpacer: {
     width: 40,
@@ -440,7 +440,7 @@ const styles = StyleSheet.create({
   progressBar: {
     height: 8,
     width: 64,
-    backgroundColor: 'rgba(72, 72, 229, 0.2)',
+    backgroundColor: 'rgba(99, 102, 241, 0.25)',
     borderRadius: radius.full,
   },
   inputGroup: {
@@ -449,7 +449,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '500',
-    color: colors.textPrimary,
+    color: '#e2e8f0',
     marginLeft: spacing.xs,
   },
   inputWrapper: {
@@ -470,10 +470,10 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md + 2,
     borderRadius: radius.xl,
     borderWidth: 1,
-    borderColor: colors.borderDark,
-    backgroundColor: '#fff',
+    borderColor: '#1f2937',
+    backgroundColor: '#0f172a',
     fontSize: 16,
-    color: colors.textPrimary,
+    color: '#e2e8f0',
   },
   visibilityButton: {
     position: 'absolute',
@@ -482,7 +482,7 @@ const styles = StyleSheet.create({
   },
   icon: {
     fontSize: 20,
-    color: colors.textSecondary,
+    color: '#94a3b8',
   },
   genderContainer: {
     flexDirection: 'row',
@@ -494,24 +494,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     borderRadius: radius.xl,
     borderWidth: 1,
-    borderColor: colors.borderDark,
-    backgroundColor: '#fff',
+    borderColor: '#1f2937',
+    backgroundColor: '#0f172a',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.sm,
   },
   genderButtonActive: {
-    backgroundColor: colors.primaryBlue,
+    backgroundColor: '#6366f1',
     borderColor: 'transparent',
-    shadowColor: colors.primaryBlue,
+    shadowColor: '#6366f1',
     shadowOffset: {width: 0, height: 4},
     shadowOpacity: 0.2,
     shadowRadius: 8,
   },
   genderIcon: {
     fontSize: 20,
-    color: colors.textSecondary,
+    color: '#94a3b8',
   },
   genderIconActive: {
     color: '#fff',
@@ -519,7 +519,7 @@ const styles = StyleSheet.create({
   genderText: {
     fontSize: 16,
     fontWeight: '500',
-    color: colors.textSecondary,
+    color: '#94a3b8',
   },
   genderTextActive: {
     color: '#fff',
@@ -528,17 +528,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
     paddingVertical: spacing.lg,
     borderTopWidth: 1,
-    borderTopColor: colors.borderDark,
+    borderTopColor: '#1f2937',
     gap: spacing.md,
   },
   registerButton: {
     width: '100%',
     height: 56,
-    backgroundColor: colors.primaryBlue,
+    backgroundColor: '#6366f1',
     borderRadius: radius.full,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: colors.primaryBlue,
+    shadowColor: '#6366f1',
     shadowOffset: {width: 0, height: 4},
     shadowOpacity: 0.2,
     shadowRadius: 8,
@@ -549,7 +549,7 @@ const styles = StyleSheet.create({
   registerButtonText: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#fff',
+    color: '#0b0d17',
   },
   loginLink: {
     alignItems: 'center',
@@ -557,7 +557,7 @@ const styles = StyleSheet.create({
   loginLinkText: {
     fontSize: 14,
     fontWeight: '500',
-    color: colors.textSecondary,
+    color: '#94a3b8',
   },
   inputError: {
     borderColor: colors.danger,
