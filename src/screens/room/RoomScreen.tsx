@@ -1,19 +1,14 @@
-import React, {useState, useEffect, useMemo, useCallback} from 'react';
+import React, {useState, useEffect} from 'react';
 import {View, Text, StyleSheet, Pressable, Platform} from 'react-native';
 import Icon from '../../components/common/Icon';
 import ParticipantAvatar from '../../components/room/ParticipantAvatar';
 import VoteModal from '../../components/room/VoteModal';
 import {colors} from '../../theme/colors';
 import {spacing} from '../../theme/spacing';
+import {typography} from '../../theme/typography';
 import {radius} from '../../theme/radius';
 import {useWebSocket} from '../../hooks/useWebSocket';
 import {useRoomsStore} from '../../stores/roomsStore';
-import {useAgoraStore} from '../../stores/agoraStore';
-import {useAuthStore} from '../../stores/authStore';
-import {shareRoomLink} from '../../utils/shareUtils';
-import {useToastStore} from '../../stores/toastStore';
-import {ROOM_TIMER, AVATAR_POSITIONS} from '../../constants/room';
-import {useResponsive} from '../../hooks/useResponsive';
 
 interface Participant {
   id: string;
@@ -37,89 +32,22 @@ const RoomScreen: React.FC<RoomScreenProps> = ({
   onBack,
 }) => {
   const [timeLeft, setTimeLeft] = useState(272); // 4:32 in seconds
+  const [isMicOn, setIsMicOn] = useState(true);
   const [showVoteModal, setShowVoteModal] = useState(false);
-  const [voteTimer, setVoteTimer] = useState(ROOM_TIMER.VOTE_DURATION_SEC);
-  // Use selectors to prevent unnecessary re-renders
-  const currentRoom = useRoomsStore((state) => state.currentRoom);
-  const updateRoom = useRoomsStore((state) => state.updateRoom);
+  const {currentRoom, updateRoom} = useRoomsStore();
   const {joinRoom: wsJoinRoom, leaveRoom: wsLeaveRoom, on, off, voteExtension} = useWebSocket();
-  const {
-    isMuted,
-    remoteUsers,
-    joinChannel,
-    leaveChannel,
-    toggleMute,
-    error: agoraError,
-  } = useAgoraStore();
-  const {user} = useAuthStore();
-  const {showToast} = useToastStore();
-  const {isMobile, isTablet, isDesktop, width} = useResponsive();
-
-  // Agora WebRTC: Join channel when roomId is available
-  useEffect(() => {
-    if (!roomId) return;
-
-    const joinAgoraChannel = async () => {
-      try {
-        await joinChannel(roomId);
-      } catch (error) {
-        // Agora App ID yapılandırılmamış olabilir - bu normal, sadece log'la
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        if (errorMessage.includes('Agora App ID is not configured')) {
-          console.warn('Agora App ID yapılandırılmamış. Ses özellikleri çalışmayacak.');
-          // Uygulama çalışmaya devam edebilir, sadece ses özellikleri olmayacak
-        } else {
-          console.error('Failed to join Agora channel:', error);
-        }
-      }
-    };
-
-    joinAgoraChannel();
-
-    return () => {
-      leaveChannel().catch((error) => {
-        // Agora hatası kritik değil, sadece log'la
-        console.warn('Failed to leave Agora channel:', error);
-      });
-    };
-  }, [roomId, joinChannel, leaveChannel]);
 
   // WebSocket event handlers
   useEffect(() => {
     if (!roomId) return;
 
-    // Join room via WebSocket (async, handle errors gracefully)
-    const joinRoomAsync = async () => {
-      try {
-        console.log(`[RoomScreen] Attempting to join room: ${roomId}`);
-        await wsJoinRoom(roomId);
-        console.log(`[RoomScreen] Successfully joined room: ${roomId}`);
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        console.error('[RoomScreen] Failed to join room via WebSocket:', errorMessage, error);
-        
-        // Check if it's a connection timeout error
-        if (errorMessage.includes('timeout') || errorMessage.includes('Backend WebSocket server')) {
-          showToast({
-            type: 'warning',
-            message: 'WebSocket bağlantısı kurulamadı. Real-time özellikler çalışmayabilir. Backend server\'ın çalıştığından emin olun.',
-          });
-        } else {
-          // Show user-friendly error message
-          showToast({
-            type: 'error',
-            message: errorMessage || 'Odaya bağlanılamadı. Lütfen sayfayı yenileyin.',
-          });
-        }
-      }
-    };
-
-    joinRoomAsync();
+    // Join room via WebSocket
+    wsJoinRoom(roomId);
 
     // Listen for room updates
-    const handleRoomUpdate = (data: {room?: {id: string; [key: string]: unknown}; joinedUser?: {id: string}; leftUser?: {id: string}}) => {
-      if (data.room && data.room.id === roomId) {
-        updateRoom(roomId, data.room as any);
+    const handleRoomUpdate = (data: any) => {
+      if (data.room) {
+        updateRoom(roomId, data.room);
       }
     };
 
@@ -130,39 +58,17 @@ const RoomScreen: React.FC<RoomScreenProps> = ({
       }
     };
 
-    // Listen for extension vote start (son 10 saniyede)
-    const handleExtensionVoteStart = (data: {roomId: string; timeLeft: number; message?: string}) => {
-      if (data.roomId === roomId) {
-        console.log(`[RoomScreen] Extension vote started for room ${roomId}, timeLeft: ${data.timeLeft}`);
-        setShowVoteModal(true);
-        setVoteTimer(ROOM_TIMER.VOTE_DURATION_SEC);
-      }
-    };
-
-    // Set up event listeners with error handling
-    try {
-      on('room-update', handleRoomUpdate);
-      on('timer-update', handleTimerUpdate);
-      on('extension-vote-start', handleExtensionVoteStart);
-    } catch (error) {
-      console.error('Failed to set up WebSocket event listeners:', error);
-    }
+    on('room-update', handleRoomUpdate);
+    on('timer-update', handleTimerUpdate);
 
     return () => {
-      try {
-        off('room-update', handleRoomUpdate);
-        off('timer-update', handleTimerUpdate);
-        off('extension-vote-start', handleExtensionVoteStart);
-        if (roomId) {
-          wsLeaveRoom(roomId).catch((error) => {
-            console.warn('Failed to leave room via WebSocket:', error);
-          });
-        }
-      } catch (error) {
-        console.warn('Error cleaning up WebSocket listeners:', error);
+      off('room-update', handleRoomUpdate);
+      off('timer-update', handleTimerUpdate);
+      if (roomId) {
+        wsLeaveRoom(roomId);
       }
     };
-  }, [roomId, wsJoinRoom, wsLeaveRoom, on, off, updateRoom, showToast]);
+  }, [roomId, wsJoinRoom, wsLeaveRoom, on, off, updateRoom]);
 
   // Update timeLeft from currentRoom
   useEffect(() => {
@@ -171,69 +77,30 @@ const RoomScreen: React.FC<RoomScreenProps> = ({
     }
   }, [currentRoom, roomId]);
 
-  // Combine participants from currentRoom (backend) and remoteUsers (Agora)
-  const participants: Participant[] = useMemo(() => {
-    const roomParticipants = currentRoom?.participants || [];
-    
-    // Create a map of participants by ID for quick lookup
-    const participantMap = new Map<string, Participant>();
-    
-    // Add room participants from backend
-    roomParticipants.forEach((p) => {
-      participantMap.set(p.id, {
-        id: p.id,
-        name: p.name,
-        avatar: p.avatar,
-        isActiveSpeaker: false,
-        isMuted: false,
-      });
-    });
-    
-    // Update with Agora remote users data (mute state, etc.)
-    remoteUsers.forEach((remoteUser) => {
-      // Try to find matching participant by checking if UID matches any participant ID
-      // Note: In a real implementation, you might need to map Agora UIDs to user IDs
-      // For now, we'll update mute state for all participants if we have remote user data
-      const matchingParticipant = Array.from(participantMap.values()).find(
-        (p) => String(p.id) === String(remoteUser.uid)
-      );
-      
-      if (matchingParticipant) {
-        matchingParticipant.isMuted = remoteUser.muted || !remoteUser.hasAudio;
-        matchingParticipant.isActiveSpeaker = remoteUser.hasAudio && !remoteUser.muted;
-      }
-    });
-    
-    return Array.from(participantMap.values());
-  }, [currentRoom?.participants, remoteUsers]);
-
-  // Use constant avatar positions
-  const avatarPositions = AVATAR_POSITIONS;
-
-  // Memoize formatTime function
-  const formatTime = useCallback((seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  }, []);
-
-  // Memoize progress calculation
-  const progress = useMemo(() => {
-    return ((ROOM_TIMER.DEFAULT_DURATION_SEC - timeLeft) / ROOM_TIMER.DEFAULT_DURATION_SEC) * 100;
-  }, [timeLeft]);
+  // Participants from currentRoom
+  const participants: Participant[] = currentRoom?.participants.map((p) => ({
+    id: p.id,
+    name: p.name,
+    avatar: p.avatar,
+    isActiveSpeaker: false,
+    isMuted: false,
+  })) || [
+    {id: '1', name: 'Alice', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBqw3A6AVQlVdkOIjOr0QcEz7B1Oro4-IJyHlBmXRZZJumEBzZUnikN3Y0mbypIduNCHAEwvYq0gWx6_5rYcmcIfW4wKfDONrkQ2k461bxMXXd-sJZU_hnrGNWSBGN-IEL7qUyOHbYcrXrpmfKwYjmHnRWih761EBRCVhjJQPe8EPqF6nlch_kd8pPs6a4jo3fL_wrf8rAsPMcnd7x98nzJvA1xIvp8I_57WdLRrVm4CIA_1mbzwIRnfJQdIvVDDZN7LVRqhfKMxnE'},
+    {id: '2', name: 'David', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDvPNrky7iyWZy8Jtdf7ClH1eWO_ylsot99E9LBAS67GoOytQk_qSYhOzksiwE3TYg8uADZLrhxy1Awz7b3BgMUmkLaCb5Sj7IJU5P7tYBEUwCFQspg4IQ3sdLQ-2UVJEo8sU98jaL2V-gU4-bXVMYdtZ7gBV8IctwMZFuJ_bbxa_URMycLp5rRTCNGAF7WgrgyxwNn9lhEZMF_t_f_D8wJbyTiorgsnAjth_uHXCJUNyH7y0O5Rz3p3GFI8itNjkGqJEHFr5dBJDA', isActiveSpeaker: true},
+    {id: '3', name: 'Sarah', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBnIbGfZ53MIDg4vQGlxdY_9P25pAKdbBT1k_iENmp0SSkPl5af0Xw8mOVWydXaKwxY4itF2-pt_DZMhzzG9nTe7TZTGN6hIDhWJM1uHcgZKV4UvzktPc0yuhlDTVls3dAQLff3xTdOqkp7e9VhqvYBKwTv0vvII5_5kzQkyjN4aAIBmqjFaQyY1JhSHmbG0cTxyN1D363BMgMd_XgSNqvdcif7dLUd3iqQoZrcsf5y9FsC6X1h9wGr2PRvZc3QTd233xFNwwIIOGk'},
+    {id: '4', name: 'Jean-Paul', avatar: undefined},
+    {id: '5', name: 'Kenji', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCrCvwGCiQh3tcmiX7u3NYJ_btxqFvLSSTCow33ccnYvJ5G9tjbOqNOmxqSHtNXGTzqVfiQ2jEuT9B_JfQ0fsZl8Gb2qj8z-okcQUEmtxt5kzVBVzvDVxQ0Bh2NfVlds29P85GABF6oRBCeKqe5HF71gGz3BK4Hlkf0CsSRgqfKvh3I1EU7Pw7VvJ_5vayw0mC96lR-AQPgtLdyW6znjgHuUclbQCtwCp2kSRnLHICu0HvQ4WRmC2iXBEMM-7BblxLDQ0kfVpp55TM', isMuted: true},
+    {id: '6', name: 'Ghost', avatar: undefined},
+    {id: '7', name: 'Elena', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCUpavZDQDcQovXhiLaArzjYfVeZkqZzauF4BJb2OeDK3FbquwtdVdlnvNM0TlxKTJ6umj-Yroa2p2kIRQWo0LvBcq4UDaOCGAc9YJmFN3qo5VaZt5jiVzThDLvV0hxTa4IkMqhNpX_ezsMLBFBPym4xAEza7FjxmJmXQso6QYhT8vwSBAHJ2w41Hxfa2s4n_06iKFQSWVRJ7frlYN9FS2LKVAT5dpQqPHt-x_4aQ56IKXgTRoZE9DN7WQ-q-WwSBDDGjSlh9CIMxU'},
+  ]);
 
   // Timer countdown
-  // Oylama süresi timer'ı (10 saniye)
   useEffect(() => {
-    if (!showVoteModal) {
-      return;
-    }
-
     const interval = setInterval(() => {
-      setVoteTimer((prev) => {
+      setTimeLeft((prev) => {
         if (prev <= 1) {
-          // 10 saniye doldu, modal'ı kapat
-          setShowVoteModal(false);
+          // Show vote modal when time is up
+          setShowVoteModal(true);
           return 0;
         }
         return prev - 1;
@@ -241,8 +108,27 @@ const RoomScreen: React.FC<RoomScreenProps> = ({
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [showVoteModal]);
+  }, []);
 
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const progress = ((300 - timeLeft) / 300) * 100; // 5 minutes = 300 seconds
+
+  // Avatar positions in a circle
+  const avatarPositions = [
+    {top: '5%', left: '50%', transform: [{translateX: -40}, {translateY: -10}]}, // Top
+    {top: '15%', right: '15%'}, // Top Right
+    {top: '50%', right: '5%', transform: [{translateY: -40}]}, // Right
+    {bottom: '15%', right: '15%'}, // Bottom Right
+    {bottom: '5%', left: '50%', transform: [{translateX: -40}, {translateY: 10}]}, // Bottom
+    {bottom: '15%', left: '15%'}, // Bottom Left
+    {top: '50%', left: '5%', transform: [{translateY: -40}]}, // Left
+    {top: '15%', left: '15%'}, // Top Left
+  ];
 
   return (
     <View style={styles.container}>
@@ -251,54 +137,15 @@ const RoomScreen: React.FC<RoomScreenProps> = ({
 
       {/* Header */}
       <View style={styles.header}>
-        <Pressable
-          style={styles.headerButton}
-          onPress={onBack}
-          accessibilityRole="button"
-          accessibilityLabel="Geri dön"
-          accessibilityHint="Önceki sayfaya dön">
+        <Pressable style={styles.headerButton} onPress={onBack}>
           <Icon name="arrow_back_ios_new" style={styles.headerIcon} />
         </Pressable>
-        <Text
-          style={styles.headerTitle}
-          numberOfLines={1}
-          accessibilityRole="header"
-          accessibilityLabel={`Oda: ${roomName}`}>
+        <Text style={styles.headerTitle} numberOfLines={1}>
           {roomName}
         </Text>
-        <View style={styles.headerRight}>
-          <Pressable
-            style={styles.headerButton}
-            onPress={async () => {
-              if (roomId) {
-                const success = await shareRoomLink(roomId, roomName);
-                if (success) {
-                  showToast({
-                    type: 'success',
-                    message: 'Room link copied to clipboard!',
-                  });
-                } else {
-                  showToast({
-                    type: 'error',
-                    message: 'Failed to share room link',
-                  });
-                }
-              }
-            }}
-            accessibilityRole="button"
-            accessibilityLabel="Oda linkini paylaş"
-            accessibilityHint="Oda linkini panoya kopyala">
-            <Icon name="share" style={styles.headerIcon} />
-          </Pressable>
-          <Pressable
-            style={styles.headerButton}
-            onPress={onLeave}
-            accessibilityRole="button"
-            accessibilityLabel="Odadan ayrıl"
-            accessibilityHint="Odadan çıkmak için tıklayın">
-            <Icon name="logout" style={styles.headerIcon} />
-          </Pressable>
-        </View>
+        <Pressable style={styles.headerButton} onPress={onLeave}>
+          <Icon name="logout" style={styles.headerIcon} />
+        </Pressable>
       </View>
 
       {/* Main Content Area */}
@@ -311,12 +158,7 @@ const RoomScreen: React.FC<RoomScreenProps> = ({
               {/* SVG Progress Ring - Using View with border for simplicity */}
               <View style={styles.progressRingBackground} />
               <View style={[styles.progressRingFill, {width: `${progress}%`}]} />
-              <Text
-                style={styles.timerText}
-                accessibilityLabel={`Kalan süre: ${formatTime(timeLeft)}`}
-                accessibilityLiveRegion="polite">
-                {formatTime(timeLeft)}
-              </Text>
+              <Text style={styles.timerText}>{formatTime(timeLeft)}</Text>
             </View>
           </View>
 
@@ -324,11 +166,7 @@ const RoomScreen: React.FC<RoomScreenProps> = ({
           {participants.map((participant, index) => {
             const position = avatarPositions[index] || {};
             return (
-              <View
-                key={participant.id}
-                style={[styles.avatarWrapper, position]}
-                accessibilityLabel={`Katılımcı: ${participant.name}${participant.isMuted ? ', Mikrofon kapalı' : ''}${participant.isActiveSpeaker ? ', Konuşuyor' : ''}`}
-                accessibilityRole="text">
+              <View key={participant.id} style={[styles.avatarWrapper, position]}>
                 <ParticipantAvatar
                   name={participant.name}
                   avatar={participant.avatar}
@@ -342,11 +180,7 @@ const RoomScreen: React.FC<RoomScreenProps> = ({
 
           {/* Invite Slot (8th position) */}
           <View style={[styles.avatarWrapper, styles.inviteSlot, avatarPositions[7]]}>
-            <Pressable
-              style={styles.inviteButton}
-              accessibilityRole="button"
-              accessibilityLabel="Arkadaş davet et"
-              accessibilityHint="Odaya arkadaş davet etmek için tıklayın">
+            <Pressable style={styles.inviteButton}>
               <Icon name="add" style={styles.inviteIcon} />
             </Pressable>
             <Text style={styles.inviteText}>Invite</Text>
@@ -359,33 +193,20 @@ const RoomScreen: React.FC<RoomScreenProps> = ({
         <View style={styles.controlSpacer} />
         {/* Mic Toggle */}
         <Pressable
-          style={[styles.micButton, !isMuted ? styles.micButtonOn : styles.micButtonOff]}
-          onPress={() => toggleMute()}
-          accessibilityRole="button"
-          accessibilityLabel={isMuted ? 'Mikrofonu aç' : 'Mikrofonu kapat'}
-          accessibilityState={{checked: !isMuted}}
-          accessibilityHint="Mikrofon durumunu değiştir">
-          <Icon name={!isMuted ? 'mic' : 'mic_off'} style={styles.micIcon} />
+          style={[styles.micButton, isMicOn ? styles.micButtonOn : styles.micButtonOff]}
+          onPress={() => setIsMicOn(!isMicOn)}>
+          <Icon name={isMicOn ? 'mic' : 'mic_off'} style={styles.micIcon} />
         </Pressable>
         {/* Leave Button */}
         <View style={styles.controlSpacer}>
           <Pressable
             style={styles.leaveButton}
-            onPress={async () => {
-              try {
-                if (roomId) {
-                  wsLeaveRoom(roomId);
-                  await leaveChannel();
-                }
-                onLeave?.();
-              } catch (error) {
-                console.error('Error leaving room:', error);
-                onLeave?.();
+            onPress={() => {
+              if (roomId) {
+                wsLeaveRoom(roomId);
               }
-            }}
-            accessibilityRole="button"
-            accessibilityLabel="Odadan ayrıl"
-            accessibilityHint="Odadan çıkmak ve ana sayfaya dönmek için tıklayın">
+              onLeave?.();
+            }}>
             <View style={styles.leaveButtonInner}>
               <Icon name="call_end" style={styles.leaveIcon} />
             </View>
@@ -408,7 +229,6 @@ const RoomScreen: React.FC<RoomScreenProps> = ({
             }
             setShowVoteModal(false);
           }}
-          timeLeft={voteTimer}
         />
       )}
     </View>
@@ -418,7 +238,7 @@ const RoomScreen: React.FC<RoomScreenProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0b0d17',
+    backgroundColor: colors.backgroundDark,
     ...Platform.select({
       web: {
         minHeight: '100vh',
@@ -433,7 +253,7 @@ const styles = StyleSheet.create({
     height: 256,
     marginTop: -128,
     marginLeft: -128,
-    backgroundColor: 'rgba(99, 102, 241, 0.22)',
+    backgroundColor: `${colors.primary}33`,
     borderRadius: 128,
     ...Platform.select({
       web: {
@@ -450,11 +270,6 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.sm,
     zIndex: 20,
   },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
   headerButton: {
     width: 40,
     height: 40,
@@ -464,13 +279,13 @@ const styles = StyleSheet.create({
   },
   headerIcon: {
     fontSize: 28,
-    color: '#e2e8f0',
+    color: '#fff',
   },
   headerTitle: {
     flex: 1,
     fontSize: 18,
     fontWeight: '600',
-    color: '#e2e8f0',
+    color: '#fff',
     textAlign: 'center',
     paddingHorizontal: spacing.md,
   },
@@ -486,11 +301,6 @@ const styles = StyleSheet.create({
     maxWidth: 400,
     aspectRatio: 1,
     position: 'relative',
-    ...Platform.select({
-      web: {
-        maxWidth: 'min(400px, 90vw)',
-      },
-    }),
   },
   timerContainer: {
     position: 'absolute',
@@ -509,7 +319,7 @@ const styles = StyleSheet.create({
     height: 144,
     borderRadius: 72,
     borderWidth: 4,
-    borderColor: 'rgba(148, 163, 184, 0.5)',
+    borderColor: `${colors.textSecondary}50`,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
@@ -521,30 +331,23 @@ const styles = StyleSheet.create({
     height: '100%',
     borderRadius: 72,
     borderWidth: 4,
-    borderColor: 'rgba(148, 163, 184, 0.35)',
+    borderColor: `${colors.textSecondary}50`,
   },
   progressRingFill: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     height: '100%',
-    backgroundColor: '#6366f1',
-    opacity: 0.32,
+    backgroundColor: colors.primary,
+    opacity: 0.3,
   },
   timerText: {
     fontSize: 36,
     fontWeight: 'bold',
-    color: '#e2e8f0',
-    ...Platform.select({
-      web: {
-        textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)' as any,
-      },
-      default: {
-        textShadowColor: 'rgba(0, 0, 0, 0.3)',
-        textShadowOffset: {width: 0, height: 2},
-        textShadowRadius: 4,
-      },
-    }),
+    color: '#fff',
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: {width: 0, height: 2},
+    textShadowRadius: 4,
   },
   avatarWrapper: {
     position: 'absolute',
@@ -560,19 +363,19 @@ const styles = StyleSheet.create({
     borderRadius: 40,
     borderWidth: 2,
     borderStyle: 'dashed',
-    borderColor: 'rgba(148, 163, 184, 0.6)',
-    backgroundColor: 'rgba(148, 163, 184, 0.12)',
+    borderColor: colors.textSecondary,
+    backgroundColor: `${colors.textSecondary}20`,
     alignItems: 'center',
     justifyContent: 'center',
   },
   inviteIcon: {
     fontSize: 28,
-    color: '#cbd5e1',
+    color: colors.textSecondary,
   },
   inviteText: {
     marginTop: spacing.xs,
     fontSize: 12,
-    color: '#94a3b8',
+    color: colors.textSecondary,
     fontWeight: '500',
   },
   bottomControls: {
@@ -647,7 +450,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     ...Platform.select({
       web: {
-        backgroundImage: 'linear-gradient(to top, #0F172A, transparent)',
+        background: 'linear-gradient(to top, #0F172A, transparent)',
       },
     }),
     pointerEvents: 'none',

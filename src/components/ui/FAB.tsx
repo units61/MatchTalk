@@ -1,5 +1,5 @@
 import React from 'react';
-import {View, Text, StyleSheet, Pressable, Platform, Alert} from 'react-native';
+import {View, Text, StyleSheet, Pressable, Platform} from 'react-native';
 import Icon from '../common/Icon';
 import {colors} from '../../theme/colors';
 import {spacing} from '../../theme/spacing';
@@ -11,20 +11,9 @@ interface FABProps {
 }
 
 const FAB: React.FC<FABProps> = ({onPress, label = 'Yeni Odaya Katıl'}) => {
-  const handlePress = (e?: any) => {
-    e?.stopPropagation?.();
-    onPress();
-  };
-
   return (
     <View style={styles.container}>
-      <Pressable
-        style={styles.button}
-        onPress={handlePress}
-        hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}
-        accessibilityRole="button"
-        accessibilityLabel={label}
-        accessibilityHint="Yeni bir sohbet odası oluşturmak için tıklayın">
+      <Pressable style={styles.button} onPress={onPress}>
         <Icon name="add_circle" style={styles.icon} />
         <Text style={styles.label}>{label}</Text>
       </Pressable>
@@ -35,52 +24,49 @@ const FAB: React.FC<FABProps> = ({onPress, label = 'Yeni Odaya Katıl'}) => {
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    bottom: 100,
+    bottom: 90,
     left: 0,
     right: 0,
     alignItems: 'center',
-    zIndex: 1000, // Yüksek z-index - diğer elementlerin üstünde olmalı
+    zIndex: 30,
     paddingHorizontal: spacing.xl,
-    pointerEvents: 'box-none', // Container tıklamaları geçirir, sadece içindeki elementler tıklanabilir
+    pointerEvents: 'box-none',
     ...Platform.select({
       web: {
-        pointerEvents: 'box-none',
+        pointerEvents: 'none',
       },
     }),
   },
   button: {
     width: '100%',
-    maxWidth: 420,
-    height: 70,
-    backgroundColor: '#6366f1',
-    borderRadius: 24,
+    maxWidth: 400,
+    height: 64,
+    backgroundColor: colors.primaryIndigo,
+    borderRadius: radius.full,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.md,
-    shadowColor: '#6366f1',
-    shadowOffset: {width: 0, height: 12},
-    shadowOpacity: 0.32,
-    shadowRadius: 20,
+    shadowColor: colors.primaryIndigo,
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
     ...Platform.select({
       web: {
-        cursor: 'pointer',
-        userSelect: 'none',
-        pointerEvents: 'auto', // Buton tıklanabilir olmalı
-        zIndex: 1001,
+        pointerEvents: 'auto',
       },
     }),
   },
   icon: {
     fontSize: 28,
-    color: '#0b0d17',
+    color: '#fff',
   },
   label: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#0b0d17',
+    color: '#fff',
     letterSpacing: 0.5,
   },
 });

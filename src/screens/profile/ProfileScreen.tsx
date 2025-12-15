@@ -1,5 +1,5 @@
 import React, {useState, useEffect} from 'react';
-import {View, Text, StyleSheet, ScrollView, Pressable, Platform} from 'react-native';
+import {View, Text, StyleSheet, ScrollView, Pressable, Image, Platform} from 'react-native';
 import {useNavigate} from 'react-router-dom';
 import Icon from '../../components/common/Icon';
 import Avatar from '../../components/common/Avatar';
@@ -15,23 +15,6 @@ import {statsApi} from '../../services/api/statsApi';
 interface ProfileScreenProps {
   onTabChange?: (tab: 'home' | 'friends' | 'profile' | 'settings') => void;
 }
-
-interface Badge {
-  id: string;
-  name: string;
-  icon: string;
-  unlocked: boolean;
-  gradient?: string[];
-}
-
-const badges: Badge[] = [
-  {id: 'talkative', name: 'Konuşkan', icon: 'mic', unlocked: true, gradient: ['#fbbf24', '#f97316']},
-  {id: 'social', name: 'Sosyal', icon: 'group', unlocked: true, gradient: ['#60a5fa', '#6467f2']},
-  {id: 'nightowl', name: 'Gece Kuşu', icon: 'nightlight', unlocked: false},
-  {id: 'popular', name: 'Popüler', icon: 'verified', unlocked: false},
-  {id: 'vip', name: 'VIP', icon: 'diamond', unlocked: false},
-  {id: 'rocket', name: 'Roket', icon: 'rocket_launch', unlocked: false},
-];
 
 const ProfileScreen: React.FC<ProfileScreenProps> = ({onTabChange}) => {
   const [activeNavTab, setActiveNavTab] = useState<'home' | 'friends' | 'profile' | 'settings'>('profile');
@@ -74,8 +57,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({onTabChange}) => {
   const handleNavTabChange = (tab: 'home' | 'friends' | 'profile' | 'settings') => {
     setActiveNavTab(tab);
     onTabChange?.(tab);
-    // Navigate to the selected tab
-    console.log(`[ProfileScreen] Navigating to tab: ${tab}`);
+    // React Router tab navigasyonu
     navigate(`/${tab}`);
   };
 
@@ -88,15 +70,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({onTabChange}) => {
   return (
     <View style={styles.container}>
       {/* Header with Gradient */}
-      <View
-        style={[
-          styles.header,
-          Platform.select({
-            web: {
-              backgroundImage: 'linear-gradient(to bottom, #6467f2, #7c3aed)',
-            } as any,
-          }),
-        ]}>
+      <View style={styles.header}>
         <View style={styles.headerContent}>
           {/* Avatar */}
           <View style={styles.avatarContainer}>
@@ -140,7 +114,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({onTabChange}) => {
         {/* Statistics Section */}
         <View style={styles.statsGrid}>
           <View style={styles.statCard}>
-            <Text style={[styles.statValue, styles.statValuePrimary]}>{stats.hours}</Text>
+            <Text style={styles.statValue}>{stats.hours}</Text>
             <Text style={styles.statLabel}>saat</Text>
           </View>
           <View style={styles.statCard}>
@@ -149,119 +123,43 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({onTabChange}) => {
           </View>
           <View style={styles.statCard}>
             <Text style={styles.statValue}>{stats.friends}</Text>
-            <Text style={styles.statLabel}>kişi</Text>
+            <Text style={styles.statLabel}>arkadaş</Text>
           </View>
         </View>
 
-        {/* Badges Section */}
-        <View style={styles.badgesSection}>
-          <View style={styles.badgesHeader}>
-            <Text style={styles.badgesTitle}>Rozetlerim</Text>
-            <Pressable>
-              <Text style={styles.seeAllText}>Tümünü Gör</Text>
-            </Pressable>
-          </View>
-          <View style={styles.badgesGrid}>
-            {badges.map((badge) => {
-              const badgeIconStyle = badge.unlocked && badge.gradient
-                ? Platform.select({
-                    web: {
-                      backgroundImage: `linear-gradient(135deg, ${badge.gradient[0]}, ${badge.gradient[1]})`,
-                    } as any,
-                    default: {
-                      backgroundColor: badge.gradient[0],
-                    },
-                  })
-                : styles.badgeIconContainerLocked;
-
-              return (
-                <View
-                  key={badge.id}
-                  style={[
-                    styles.badgeCard,
-                    !badge.unlocked && styles.badgeCardLocked,
-                  ]}>
-                  <View
-                    style={[
-                      styles.badgeIconContainer,
-                      badgeIconStyle as any,
-                    ]}>
-                    <Icon
-                      name={badge.icon}
-                      style={!badge.unlocked ? styles.badgeIconLocked : styles.badgeIcon}
-                    />
-                  </View>
-                  <Text
-                    style={[
-                      styles.badgeName,
-                      !badge.unlocked && styles.badgeNameLocked,
-                    ]}>
-                    {badge.name}
-                  </Text>
-                </View>
-              );
-            })}
-          </View>
-        </View>
-
-        {/* Settings Menu Section */}
+        {/* Menu Items */}
         <View style={styles.menuSection}>
-          <Text style={styles.menuSectionTitle}>Ayarlar</Text>
-          <View style={styles.menuItemsContainer}>
-            <Pressable
-              style={({pressed}) => [
-                styles.menuItem,
-                pressed && styles.menuItemPressed,
-              ]}>
-              <View style={styles.menuItemLeft}>
-                <View style={styles.menuIconContainer}>
-                  <Icon name="edit" style={styles.menuIcon} />
-                </View>
-                <Text style={styles.menuText}>Profili Düzenle</Text>
-              </View>
-              <Icon name="chevron_right" style={styles.chevronIcon} />
-            </Pressable>
-            <Pressable
-              style={({pressed}) => [
-                styles.menuItem,
-                pressed && styles.menuItemPressed,
-              ]}>
-              <View style={styles.menuItemLeft}>
-                <View style={styles.menuIconContainer}>
-                  <Icon name="notifications" style={styles.menuIcon} />
-                </View>
-                <Text style={styles.menuText}>Bildirimler</Text>
-              </View>
-              <Icon name="chevron_right" style={styles.chevronIcon} />
-            </Pressable>
-            <Pressable
-              style={({pressed}) => [
-                styles.menuItem,
-                pressed && styles.menuItemPressed,
-              ]}>
-              <View style={styles.menuItemLeft}>
-                <View style={styles.menuIconContainer}>
-                  <Icon name="lock" style={styles.menuIcon} />
-                </View>
-                <Text style={styles.menuText}>Gizlilik</Text>
-              </View>
-              <Icon name="chevron_right" style={styles.chevronIcon} />
-            </Pressable>
-            <Pressable
-              style={({pressed}) => [
-                styles.menuItem,
-                pressed && styles.menuItemPressed,
-              ]}>
-              <View style={styles.menuItemLeft}>
-                <View style={styles.menuIconContainer}>
-                  <Icon name="info" style={styles.menuIcon} />
-                </View>
-                <Text style={styles.menuText}>Hakkında</Text>
-              </View>
-              <Icon name="chevron_right" style={styles.chevronIcon} />
-            </Pressable>
-          </View>
+          <Pressable style={styles.menuItem}>
+            <Icon name="edit" style={styles.menuIcon} />
+            <Text style={styles.menuText}>Profili Düzenle</Text>
+            <Icon name="chevron_right" style={styles.chevronIcon} />
+          </Pressable>
+          <Pressable style={styles.menuItem}>
+            <Icon name="notifications" style={styles.menuIcon} />
+            <Text style={styles.menuText}>Bildirimler</Text>
+            <Icon name="chevron_right" style={styles.chevronIcon} />
+          </Pressable>
+          <Pressable style={styles.menuItem}>
+            <Icon name="privacy_tip" style={styles.menuIcon} />
+            <Text style={styles.menuText}>Gizlilik</Text>
+            <Icon name="chevron_right" style={styles.chevronIcon} />
+          </Pressable>
+          <Pressable style={styles.menuItem}>
+            <Icon name="help" style={styles.menuIcon} />
+            <Text style={styles.menuText}>Yardım & Destek</Text>
+            <Icon name="chevron_right" style={styles.chevronIcon} />
+          </Pressable>
+          <Pressable style={styles.menuItem}>
+            <Icon name="info" style={styles.menuIcon} />
+            <Text style={styles.menuText}>Hakkında</Text>
+            <Icon name="chevron_right" style={styles.chevronIcon} />
+          </Pressable>
         </View>
+
+        {/* Logout Button */}
+        <Pressable style={styles.logoutButton}>
+          <Text style={styles.logoutText}>Çıkış Yap</Text>
+        </Pressable>
       </ScrollView>
 
       {/* Bottom Navigation */}
@@ -273,15 +171,15 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({onTabChange}) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0b0d17',
+    backgroundColor: colors.backgroundDarkMain,
     ...Platform.select({
       web: {
-        minHeight: '100vh' as any,
+        minHeight: '100vh',
       },
     }),
   },
   header: {
-    backgroundColor: '#0b0d17', // Fallback for non-web platforms
+    backgroundColor: colors.primaryIndigo,
     paddingTop: spacing.xxl + spacing.md,
     paddingBottom: spacing.xxl,
     paddingHorizontal: spacing.xl,
@@ -317,7 +215,7 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#e2e8f0',
+    color: '#fff',
   },
   userLevel: {
     fontSize: 16,
@@ -369,148 +267,65 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: '#0f172a',
+    backgroundColor: colors.cardDark,
     borderRadius: radius.lg,
     padding: spacing.md,
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.xs / 2,
     borderWidth: 1,
-    borderColor: '#1f2937',
+    borderColor: 'rgba(148, 163, 184, 0.5)',
   },
   statValue: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#fff',
-  },
-  statValuePrimary: {
     color: colors.primaryIndigo,
   },
   statLabel: {
     fontSize: 12,
     fontWeight: '500',
-    color: '#94a3b8',
-  },
-  badgesSection: {
-    gap: spacing.md,
-  },
-  badgesHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.xs / 2,
-  },
-  badgesTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#e2e8f0',
-  },
-  seeAllText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#6366f1',
-  },
-  badgesGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.md,
-    justifyContent: 'space-between',
-  },
-  badgeCard: {
-    width: '30%',
-    minWidth: 100,
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: spacing.sm,
-    backgroundColor: '#0f172a',
-    borderRadius: radius.lg,
-    padding: spacing.md,
-    borderWidth: 1,
-    borderColor: '#1f2937',
-  },
-  badgeCardLocked: {
-    opacity: 0.5,
-    backgroundColor: '#0b0d17',
-  },
-  badgeIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  badgeIconContainerLocked: {
-    backgroundColor: '#475569',
-  },
-  badgeIcon: {
-    fontSize: 24,
-    color: '#fff',
-  },
-  badgeIconLocked: {
-    color: '#94a3b8',
-  },
-  badgeName: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: '#cbd5e1',
-    textAlign: 'center',
-  },
-  badgeNameLocked: {
-    color: '#94a3b8',
+    color: colors.textSecondary,
   },
   menuSection: {
-    gap: spacing.md,
-    paddingBottom: spacing.lg,
-  },
-  menuSectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.textPrimary,
-    paddingHorizontal: spacing.xs / 2,
-  },
-  menuItemsContainer: {
     gap: spacing.sm,
   },
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#0f172a',
+    backgroundColor: colors.cardDark,
     borderRadius: radius.lg,
     padding: spacing.md,
-    borderWidth: 1,
-    borderColor: '#1f2937',
-  },
-  menuItemPressed: {
-    backgroundColor: '#111827',
-  },
-  menuItemLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
     gap: spacing.md,
-    flex: 1,
-  },
-  menuIconContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    backgroundColor: 'rgba(99, 102, 241, 0.18)',
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(148, 163, 184, 0.5)',
   },
   menuIcon: {
-    fontSize: 20,
-    color: '#c7d2fe',
+    fontSize: 24,
+    color: colors.textSecondary,
   },
   menuText: {
     flex: 1,
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '500',
-    color: '#e2e8f0',
+    color: colors.textPrimary,
   },
   chevronIcon: {
     fontSize: 20,
-    color: '#9ca3af',
+    color: colors.textSecondary,
+  },
+  logoutButton: {
+    marginTop: spacing.md,
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#ef4444',
+    borderRadius: radius.lg,
+    padding: spacing.md,
+    alignItems: 'center',
+  },
+  logoutText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#ef4444',
   },
 });
 

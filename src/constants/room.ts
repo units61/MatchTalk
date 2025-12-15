@@ -28,3 +28,4 @@ export const AVATAR_POSITIONS = [
   {top: '15%', left: '15%'}, // Top Left
 ] as const;
 
+

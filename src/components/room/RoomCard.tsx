@@ -1,4 +1,4 @@
-import React, {useMemo} from 'react';
+import React from 'react';
 import {View, Text, StyleSheet, Pressable, Image} from 'react-native';
 import AvatarGroup from '../common/AvatarGroup';
 import TimerChip from '../ui/TimerChip';
@@ -6,6 +6,7 @@ import GenderBar from '../ui/GenderBar';
 import Icon from '../common/Icon';
 import {colors} from '../../theme/colors';
 import {spacing} from '../../theme/spacing';
+import {typography} from '../../theme/typography';
 import {radius} from '../../theme/radius';
 
 interface RoomCardProps {
@@ -25,7 +26,7 @@ interface RoomCardProps {
   onJoin: () => void;
 }
 
-const RoomCardComponent: React.FC<RoomCardProps> = ({
+const RoomCard: React.FC<RoomCardProps> = ({
   name,
   category,
   timeLeft,
@@ -35,24 +36,13 @@ const RoomCardComponent: React.FC<RoomCardProps> = ({
   femaleCount,
   onJoin,
 }) => {
-  const formatTime = useMemo(() => {
-    const mins = Math.floor(timeLeft / 60);
-    const secs = timeLeft % 60;
+  const formatTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  }, [timeLeft]);
+  };
 
-  const malePercentage = useMemo(() => {
-    if (participants.length === 0) return 0;
-    return (maleCount / participants.length) * 100;
-  }, [maleCount, participants.length]);
-
-  const avatarData = useMemo(() => {
-    return participants.map((p) => ({
-      id: p.id,
-      name: p.name,
-      avatar: p.avatar,
-    }));
-  }, [participants]);
+  const malePercentage = (maleCount / participants.length) * 100;
 
   return (
     <View style={styles.container}>
@@ -62,13 +52,17 @@ const RoomCardComponent: React.FC<RoomCardProps> = ({
           <Text style={styles.title}>{name}</Text>
           <Text style={styles.category}>{category}</Text>
         </View>
-        <TimerChip time={formatTime} />
+        <TimerChip time={formatTime(timeLeft)} />
       </View>
 
       {/* Avatars */}
       <View style={styles.avatarsContainer}>
         <AvatarGroup
-          avatars={avatarData}
+          avatars={participants.map((p) => ({
+            id: p.id,
+            name: p.name,
+            avatar: p.avatar,
+          }))}
           maxVisible={4}
           size={40}
         />
@@ -92,12 +86,7 @@ const RoomCardComponent: React.FC<RoomCardProps> = ({
         />
 
         {/* Join Button */}
-        <Pressable
-          style={styles.joinButton}
-          onPress={onJoin}
-          accessibilityRole="button"
-          accessibilityLabel={`${name} odasına katıl`}
-          accessibilityHint="Odaya katılmak için tıklayın">
+        <Pressable style={styles.joinButton} onPress={onJoin}>
           <Text style={styles.joinButtonText}>Katıl</Text>
         </Pressable>
       </View>
@@ -107,16 +96,16 @@ const RoomCardComponent: React.FC<RoomCardProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#0f172a',
+    backgroundColor: '#fff',
     borderRadius: radius.xl,
     padding: spacing.xl,
     marginBottom: spacing.md,
-    shadowColor: '#0f172a',
-    shadowOffset: {width: 0, height: 12},
-    shadowOpacity: 0.22,
-    shadowRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
     borderWidth: 1,
-    borderColor: '#1e293b',
+    borderColor: '#f1f5f9',
   },
   header: {
     flexDirection: 'row',
@@ -130,12 +119,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#ffffff',
+    color: colors.textPrimary,
     marginBottom: spacing.xs / 2,
   },
   category: {
     fontSize: 14,
-    color: '#94a3b8',
+    color: colors.textMuted,
     marginTop: 2,
   },
   avatarsContainer: {
@@ -147,7 +136,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingTop: spacing.md,
     borderTopWidth: 1,
-    borderTopColor: '#1e293b',
+    borderTopColor: '#f1f5f9',
   },
   participantsCount: {
     flexDirection: 'row',
@@ -156,49 +145,24 @@ const styles = StyleSheet.create({
   },
   groupIcon: {
     fontSize: 20,
-    color: '#94a3b8',
+    color: colors.textSecondary,
   },
   countText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#cbd5e1',
+    color: colors.textSecondary,
   },
   joinButton: {
-    backgroundColor: '#6366f1',
+    backgroundColor: '#f1f5f9',
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.xl,
     borderRadius: radius.full,
-    shadowColor: '#6366f1',
-    shadowOffset: {width: 0, height: 6},
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
   },
   joinButtonText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#0f111a',
+    color: colors.textPrimary,
   },
 });
-
-// Memoize component to prevent unnecessary re-renders
-const RoomCard = React.memo(RoomCardComponent, (prevProps, nextProps) => {
-  // Custom comparison function for better performance
-  return (
-    prevProps.id === nextProps.id &&
-    prevProps.name === nextProps.name &&
-    prevProps.category === nextProps.category &&
-    prevProps.timeLeft === nextProps.timeLeft &&
-    prevProps.maxParticipants === nextProps.maxParticipants &&
-    prevProps.maleCount === nextProps.maleCount &&
-    prevProps.femaleCount === nextProps.femaleCount &&
-    prevProps.participants.length === nextProps.participants.length &&
-    prevProps.participants.every((p, i) => 
-      p.id === nextProps.participants[i]?.id &&
-      p.name === nextProps.participants[i]?.name
-    )
-  );
-});
-
-RoomCard.displayName = 'RoomCard';
 
 export default RoomCard;

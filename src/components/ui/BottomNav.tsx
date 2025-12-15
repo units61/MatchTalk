@@ -27,11 +27,7 @@ const BottomNav: React.FC<BottomNavProps> = ({activeTab, onTabChange}) => {
             <Pressable
               key={tab.id}
               style={styles.tab}
-              onPress={() => onTabChange(tab.id)}
-              accessibilityRole="button"
-              accessibilityLabel={tab.label}
-              accessibilityState={{selected: isActive}}
-              accessibilityHint={`${tab.label} sekmesine geç`}>
+              onPress={() => onTabChange(tab.id)}>
               <View style={styles.tabContent}>
                 <Icon
                   name={tab.icon}
@@ -52,9 +48,9 @@ const BottomNav: React.FC<BottomNavProps> = ({activeTab, onTabChange}) => {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#0f172a',
+    backgroundColor: '#fff',
     borderTopWidth: 1,
-    borderTopColor: '#1e293b',
+    borderTopColor: '#e2e8f0',
     height: 84,
     paddingBottom: spacing.xl,
     paddingHorizontal: spacing.xl,

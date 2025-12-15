@@ -310,3 +310,4 @@ Sorularınız için issue açabilir veya iletişime geçebilirsiniz.
 MatchTalk projesine katkıda bulunan herkese teşekkürler!
 
 
+

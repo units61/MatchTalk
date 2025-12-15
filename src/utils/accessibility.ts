@@ -161,3 +161,4 @@ export function getAccessibleName(element: HTMLElement): string {
   return element.textContent || element.getAttribute('alt') || '';
 }
 
+

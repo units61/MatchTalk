@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useMemo, useCallback} from 'react';
+import React, {useState, useEffect} from 'react';
 import {View, Text, StyleSheet, ScrollView, Pressable, Platform, RefreshControl} from 'react-native';
 import {useNavigate} from 'react-router-dom';
 import Icon from '../../components/common/Icon';
@@ -6,17 +6,14 @@ import RoomCard from '../../components/room/RoomCard';
 import BottomNav from '../../components/ui/BottomNav';
 import FAB from '../../components/ui/FAB';
 import Avatar from '../../components/common/Avatar';
-import CreateRoomModal from '../../components/room/CreateRoomModal';
+import VoiceMatchHero from '../../components/home/VoiceMatchHero';
 import {colors} from '../../theme/colors';
 import {spacing} from '../../theme/spacing';
+import {typography} from '../../theme/typography';
 import {radius} from '../../theme/radius';
 import {useRoomsStore} from '../../stores/roomsStore';
 import {useAuthStore} from '../../stores/authStore';
-import {useWebSocketEvents} from '../../hooks/useWebSocketEvents';
-import {CreateRoomInput} from '../../schemas/room';
-import {RoomUpdateEvent} from '../../types/websocket';
-import {useResponsive} from '../../hooks/useResponsive';
-import Skeleton from '../../components/ui/Skeleton';
+import {useWebSocket} from '../../hooks/useWebSocket';
 
 interface HomeScreenProps {
   onTabChange?: (tab: 'home' | 'friends' | 'profile' | 'settings') => void;
@@ -24,129 +21,68 @@ interface HomeScreenProps {
 
 const HomeScreen: React.FC<HomeScreenProps> = ({onTabChange}) => {
   const [activeTab, setActiveTab] = useState<'home' | 'friends' | 'profile' | 'settings'>('home');
-  const [showCreateModal, setShowCreateModal] = useState(false);
-
-  // Use selectors to prevent unnecessary re-renders
-  const rooms = useRoomsStore((state) => state.rooms);
-  const loading = useRoomsStore((state) => state.fetching || state.creating || state.joining);
-  const fetching = useRoomsStore((state) => state.fetching);
-  const creating = useRoomsStore((state) => state.creating);
-  const currentRoom = useRoomsStore((state) => state.currentRoom);
-  const fetchRooms = useRoomsStore((state) => state.fetchRooms);
-  const joinRoom = useRoomsStore((state) => state.joinRoom);
-  const createRoom = useRoomsStore((state) => state.createRoom);
-  const updateRoom = useRoomsStore((state) => state.updateRoom);
-  const leaveRoom = useRoomsStore((state) => state.leaveRoom);
+  const {rooms, loading, fetchRooms, joinRoom, updateRoom} = useRoomsStore();
   const {user} = useAuthStore();
-  const navigate = useNavigate(); // React Router navigate hook
-  const {isMobile, isTablet, isDesktop} = useResponsive();
-
-  // Memoize rooms list to prevent unnecessary re-renders
-  const memoizedRooms = useMemo(() => rooms, [rooms]);
-
-  // Announce room count changes to screen readers
-  useEffect(() => {
-    if (!loading && rooms.length > 0) {
-      // Screen reader announcement will be handled by accessibility utilities if needed
-    }
-  }, [rooms.length, loading]);
-
-  // Use WebSocket events hook for real-time updates
-  const handleRoomUpdate = useCallback((data: RoomUpdateEvent) => {
-    if (data.room) {
-      updateRoom(data.room.id, data.room);
-    } else if (data.joinedUser || data.leftUser) {
-      // Refresh rooms list when someone joins/leaves
-      fetchRooms();
-    }
-  }, [updateRoom, fetchRooms]);
-
-  const handleRoomCreated = useCallback(() => {
-    fetchRooms();
-  }, [fetchRooms]);
-
-  const handleRoomClosed = useCallback(() => {
-    fetchRooms();
-  }, [fetchRooms]);
-
-  useWebSocketEvents({
-    onRoomUpdate: handleRoomUpdate,
-    onRoomCreated: handleRoomCreated,
-    onRoomClosed: handleRoomClosed,
-  });
+  const {on, off} = useWebSocket();
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchRooms();
   }, [fetchRooms]);
 
-  // Ana sayfaya dönüldüğünde aktif oda kontrolü ve temizleme
+  // Real-time room updates
   useEffect(() => {
-    const checkAndCleanupActiveRoom = async () => {
-      // Odalar yüklenene kadar bekle
-      if (loading || rooms.length === 0) {
-        return;
-      }
-
-      // Eğer frontend'de currentRoom null ama backend'de kullanıcının katıldığı bir oda varsa
-      if (!currentRoom && user) {
-        // Dönen odalar listesinde kullanıcının katıldığı bir oda var mı kontrol et
-        const userActiveRoom = rooms.find((room) => {
-          return room.participants.some((participant) => participant.id === user.id);
-        });
-
-        if (userActiveRoom) {
-          console.log(`[HomeScreen] Kullanıcı ${user.id} backend'de ${userActiveRoom.id} odasında görünüyor ama frontend'de currentRoom null. Temizleniyor...`);
-          try {
-            await leaveRoom(userActiveRoom.id);
-            console.log(`[HomeScreen] Başarıyla ${userActiveRoom.id} odasından ayrıldı`);
-          } catch (error) {
-            console.warn(`[HomeScreen] Odadan ayrılırken hata oluştu:`, error);
-            // Hata kritik değil, kullanıcıya bilgi vermeye gerek yok
-          }
-        }
+    // Listen for room updates
+    const handleRoomUpdate = (data: {room?: any; joinedUser?: {id: string}; leftUser?: {id: string}}) => {
+      if (data.room) {
+        updateRoom(data.room.id, data.room);
+      } else if (data.joinedUser || data.leftUser) {
+        // Refresh rooms list when someone joins/leaves
+        fetchRooms();
       }
     };
 
-    checkAndCleanupActiveRoom();
-  }, [rooms, loading, currentRoom, user, leaveRoom]);
+    // Listen for new room created
+    const handleRoomCreated = (data: {room: any}) => {
+      fetchRooms();
+    };
 
-  const handleTabChange = useCallback((tab: 'home' | 'friends' | 'profile' | 'settings') => {
+    // Listen for room closed
+    const handleRoomClosed = (data: {roomId: string; reason: string}) => {
+      fetchRooms();
+    };
+
+    on('room-update', handleRoomUpdate);
+    on('room-created', handleRoomCreated);
+    on('room-closed', handleRoomClosed);
+
+    return () => {
+      off('room-update', handleRoomUpdate);
+      off('room-created', handleRoomCreated);
+      off('room-closed', handleRoomClosed);
+    };
+  }, [on, off, fetchRooms, updateRoom]);
+
+  const handleTabChange = (tab: 'home' | 'friends' | 'profile' | 'settings') => {
     setActiveTab(tab);
     onTabChange?.(tab);
-    // Navigate to the selected tab
-    console.log(`[HomeScreen] Navigating to tab: ${tab}`);
+    // React Router ile gerçek sayfa navigasyonu
     navigate(`/${tab}`);
-  }, [onTabChange, navigate]);
+  };
 
-  const handleRefresh = useCallback(() => {
+  const handleRefresh = () => {
     fetchRooms();
-  }, [fetchRooms]);
+  };
 
-  const handleJoinRoom = useCallback(async (roomId: string) => {
+  const handleJoinRoom = async (roomId: string) => {
     try {
       await joinRoom(roomId);
-      // Navigate to room screen using React Router directly
-      console.log(`[HomeScreen] Navigating to room: ${roomId}`);
-      navigate(`/room/${roomId}`);
+      // Navigate to room screen would go here
+      console.log('Joined room:', roomId);
     } catch (error) {
       console.error('Failed to join room:', error);
-      // Error will be handled by toast notifications later
     }
-  }, [joinRoom, navigate]);
-
-  const handleCreateRoom = useCallback(async (input: CreateRoomInput) => {
-    try {
-      const room = await createRoom(input);
-      setShowCreateModal(false);
-      // Navigate to the created room using React Router directly
-      console.log(`[HomeScreen] Navigating to created room: ${room.id}`);
-      navigate(`/room/${room.id}`);
-    } catch (error) {
-      console.error('Failed to create room:', error);
-      // Error will be handled by toast notifications later
-      throw error; // Re-throw to let modal handle it
-    }
-  }, [createRoom, navigate]);
+  };
 
   return (
     <View style={styles.container}>
@@ -162,23 +98,11 @@ const HomeScreen: React.FC<HomeScreenProps> = ({onTabChange}) => {
 
         {/* Right: Actions */}
         <View style={styles.headerActions}>
-          <Pressable
-            style={styles.notificationButton}
-            onPress={() => {
-              console.log('[HomeScreen] Navigating to notifications');
-              navigate('/notifications');
-            }}
-            accessibilityRole="button"
-            accessibilityLabel="Bildirimler"
-            accessibilityHint="Bildirimler sayfasına git">
+          <Pressable style={styles.notificationButton}>
             <Icon name="notifications" style={styles.notificationIcon} />
-            <View style={styles.badge} accessibilityLabel="Yeni bildirim var" />
+            <View style={styles.badge} />
           </Pressable>
-          <Pressable
-            style={styles.profileButton}
-            accessibilityRole="button"
-            accessibilityLabel={`${user?.name || 'Kullanıcı'} profili`}
-            accessibilityHint="Profil sayfasına git">
+          <Pressable style={styles.profileButton}>
             <Avatar
               name={user?.name || 'Kullanıcı'}
               avatar={user?.avatar}
@@ -195,67 +119,53 @@ const HomeScreen: React.FC<HomeScreenProps> = ({onTabChange}) => {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={fetching} onRefresh={handleRefresh} />
-        }
-        pointerEvents="box-none">
+          <RefreshControl refreshing={loading} onRefresh={handleRefresh} />
+        }>
+        {/* Voice match hero */}
+        <VoiceMatchHero />
+
         {/* Section Header */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle} accessibilityRole="header">Aktif Odalar</Text>
-          <Pressable
-            onPress={handleRefresh}
-            accessibilityRole="button"
-            accessibilityLabel="Odaları yenile"
-            accessibilityHint="Aktif odalar listesini yenilemek için tıklayın">
+          <Text style={styles.sectionTitle}>Aktif Odalar</Text>
+          <Pressable onPress={handleRefresh}>
             <Text style={styles.seeAllText}>Yenile</Text>
           </Pressable>
         </View>
 
         {/* Room Cards */}
-        {fetching && rooms.length === 0 ? (
-          // Show skeleton loaders while loading
-          <>
-            {[1, 2, 3].map((i) => (
-              <View key={i} style={styles.skeletonCard}>
-                <Skeleton width="100%" height={180} borderRadius={16} />
-              </View>
-            ))}
-          </>
-        ) : rooms.length === 0 ? (
+        {rooms.length === 0 && !loading ? (
           <View style={styles.emptyState}>
             <Icon name="meeting_room" style={styles.emptyIcon} />
             <Text style={styles.emptyText}>Henüz aktif oda yok</Text>
             <Text style={styles.emptySubtext}>Yeni bir oda oluşturun veya bekleyin</Text>
           </View>
         ) : (
-          <View style={styles.roomsContainer}>
-            {memoizedRooms.map((room) => (
-              <RoomCard
-                key={room.id}
-                id={room.id}
-                name={room.name}
-                category={room.category}
-                timeLeft={room.timeLeftSec}
-                participants={room.participants}
-                maxParticipants={room.maxParticipants}
-                maleCount={room.maleCount}
-                femaleCount={room.femaleCount}
-                onJoin={() => handleJoinRoom(room.id)}
-              />
-            ))}
+          rooms.map((room) => (
+            <RoomCard
+              key={room.id}
+              id={room.id}
+              name={room.name}
+              category={room.category}
+              timeLeft={room.timeLeftSec}
+              participants={room.participants}
+              maxParticipants={room.maxParticipants}
+              maleCount={room.maleCount}
+              femaleCount={room.femaleCount}
+              onJoin={() => handleJoinRoom(room.id)}
+            />
+          ))
+        )}
+
+        {/* Loading Indicator */}
+        {loading && (
+          <View style={styles.loadingIndicator}>
+            <View style={styles.loadingBar} />
           </View>
         )}
       </ScrollView>
 
       {/* Floating Action Button */}
-      <FAB onPress={() => setShowCreateModal(true)} />
-
-      {/* Create Room Modal */}
-      <CreateRoomModal
-        visible={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        onSubmit={handleCreateRoom}
-        loading={creating}
-      />
+      <FAB onPress={() => console.log('New room')} />
 
       {/* Bottom Navigation */}
       <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
@@ -266,7 +176,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({onTabChange}) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0b0d17',
+    backgroundColor: colors.backgroundLightMain,
   },
   header: {
     flexDirection: 'row',
@@ -274,7 +184,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: spacing.xl,
     paddingVertical: spacing.xl,
-    backgroundColor: '#0b0d17',
+    backgroundColor: colors.backgroundLightMain,
     zIndex: 10,
   },
   logoContainer: {
@@ -286,7 +196,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#6366f1',
+    backgroundColor: colors.primaryIndigo,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -297,7 +207,7 @@ const styles = StyleSheet.create({
   logoText: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#e2e8f0',
+    color: colors.textPrimary,
   },
   headerActions: {
     flexDirection: 'row',
@@ -311,7 +221,7 @@ const styles = StyleSheet.create({
   },
   notificationIcon: {
     fontSize: 24,
-    color: '#94a3b8',
+    color: colors.textMuted,
   },
   badge: {
     position: 'absolute',
@@ -322,7 +232,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     backgroundColor: '#ef4444',
     borderWidth: 2,
-    borderColor: '#0b0d17',
+    borderColor: colors.backgroundLightMain,
   },
   profileButton: {
     borderRadius: radius.full,
@@ -337,9 +247,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingBottom: 180, // Space for FAB and BottomNav
     paddingTop: spacing.sm,
-    maxWidth: 1200, // Max width for desktop
-    alignSelf: 'center',
-    width: '100%',
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -351,12 +258,12 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#e2e8f0',
+    color: colors.textPrimary,
   },
   seeAllText: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#6366f1',
+    color: colors.primaryIndigo,
   },
   loadingIndicator: {
     alignItems: 'center',
@@ -376,30 +283,17 @@ const styles = StyleSheet.create({
   },
   emptyIcon: {
     fontSize: 64,
-    color: '#475569',
+    color: colors.textMuted,
   },
   emptyText: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#e2e8f0',
+    color: colors.textPrimary,
   },
   emptySubtext: {
     fontSize: 14,
-    color: '#94a3b8',
+    color: colors.textSecondary,
     textAlign: 'center',
-  },
-  skeletonCard: {
-    marginBottom: spacing.md,
-  },
-  roomsContainer: {
-    width: '100%',
-    ...Platform.select({
-      web: {
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
-        gap: spacing.md,
-      },
-    }),
   },
 });
 

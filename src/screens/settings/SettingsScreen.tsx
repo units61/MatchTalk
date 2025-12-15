@@ -1,14 +1,11 @@
 import React, {useState} from 'react';
-import {View, Text, StyleSheet, ScrollView, Pressable, Platform, useColorScheme} from 'react-native';
-import {useNavigate} from 'react-router-dom';
+import {View, Text, StyleSheet, ScrollView, Pressable, Platform} from 'react-native';
 import Icon from '../../components/common/Icon';
 import BottomNav from '../../components/ui/BottomNav';
 import {colors} from '../../theme/colors';
 import {spacing} from '../../theme/spacing';
 import {typography} from '../../theme/typography';
 import {radius} from '../../theme/radius';
-import {useNavigation} from '../../hooks/useNavigation';
-import {useAuthStore} from '../../stores/authStore';
 
 interface SettingsScreenProps {
   onTabChange?: (tab: 'home' | 'friends' | 'profile' | 'settings') => void;
@@ -20,26 +17,10 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({onTabChange, onBack}) =>
   const [pushNotifications, setPushNotifications] = useState(true);
   const [emailNotifications, setEmailNotifications] = useState(false);
   const [roomInvites, setRoomInvites] = useState(true);
-  const {navigate} = useNavigation();
-  const navigateRouter = useNavigate(); // React Router navigate
-  const {logout} = useAuthStore();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
 
   const handleNavTabChange = (tab: 'home' | 'friends' | 'profile' | 'settings') => {
     setActiveNavTab(tab);
     onTabChange?.(tab);
-    // Navigate to the selected tab
-    console.log(`[SettingsScreen] Navigating to tab: ${tab}`);
-    navigateRouter(`/${tab}`);
-  };
-
-  const handleLogout = async () => {
-    try {
-      await logout();
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
   };
 
   const ToggleSwitch: React.FC<{value: boolean; onValueChange: (value: boolean) => void}> = ({
@@ -48,34 +29,11 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({onTabChange, onBack}) =>
   }) => {
     return (
       <Pressable
-        style={styles.toggleWrapper}
+        style={[styles.toggleContainer, value && styles.toggleContainerActive]}
         onPress={() => onValueChange(!value)}>
-        <View style={[
-          styles.toggleContainer, 
-          isDark && styles.toggleContainerDark,
-          value && styles.toggleContainerActive
-        ]}>
-          <View style={[styles.toggleThumb, value && styles.toggleThumbActive]} />
-        </View>
+        <View style={[styles.toggleThumb, value && styles.toggleThumbActive]} />
       </Pressable>
     );
-  };
-
-  const dynamicStyles = {
-    container: [styles.container, isDark && styles.containerDark],
-    header: [styles.header, isDark && styles.headerDark],
-    headerTitle: StyleSheet.flatten([styles.headerTitle, isDark && styles.headerTitleDark]),
-    backIcon: StyleSheet.flatten([styles.backIcon, isDark && styles.backIconDark]),
-    sectionTitle: StyleSheet.flatten([styles.sectionTitle, isDark && styles.sectionTitleDark]),
-    menuItem: [styles.menuItem, isDark && styles.menuItemDark],
-    menuIconContainer: [styles.menuIconContainer, isDark && styles.menuIconContainerDark],
-    menuIcon: StyleSheet.flatten([styles.menuIcon, isDark && styles.menuIconDark]),
-    menuTitle: StyleSheet.flatten([styles.menuTitle, isDark && styles.menuTitleDark]),
-    menuSubtitle: StyleSheet.flatten([styles.menuSubtitle, isDark && styles.menuSubtitleDark]),
-    toggleItem: [styles.toggleItem, isDark && styles.toggleItemDark],
-    toggleContainer: [styles.toggleContainer, isDark && styles.toggleContainerDark],
-    dangerButton: [styles.dangerButton, isDark && styles.dangerButtonDark],
-    versionText: StyleSheet.flatten([styles.versionText, isDark && styles.versionTextDark]),
   };
 
   const MenuItem: React.FC<{
@@ -86,107 +44,70 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({onTabChange, onBack}) =>
     showChevron?: boolean;
   }> = ({icon, title, subtitle, onPress, showChevron = true}) => {
     return (
-      <Pressable 
-        style={({pressed}) => [
-          dynamicStyles.menuItem,
-          pressed && styles.menuItemPressed
-        ]} 
-        onPress={onPress}>
-        <View style={styles.menuItemLeft}>
-          <View style={dynamicStyles.menuIconContainer}>
-            <Icon name={icon} style={dynamicStyles.menuIcon} />
-          </View>
-          {subtitle ? (
-            <View style={styles.menuTextContainer}>
-              <Text style={dynamicStyles.menuTitle}>{title}</Text>
-            </View>
-          ) : (
-            <Text style={dynamicStyles.menuTitle}>{title}</Text>
-          )}
+      <Pressable style={styles.menuItem} onPress={onPress}>
+        <View style={styles.menuIconContainer}>
+          <Icon name={icon} style={styles.menuIcon} />
         </View>
-        {subtitle ? (
-          <View style={styles.menuItemRight}>
-            <Text style={dynamicStyles.menuSubtitle}>{subtitle}</Text>
-            {showChevron && <Icon name="chevron_right" style={styles.chevronIcon} />}
-          </View>
-        ) : (
-          showChevron && <Icon name="chevron_right" style={styles.chevronIcon} />
-        )}
+        <View style={styles.menuTextContainer}>
+          <Text style={styles.menuTitle}>{title}</Text>
+          {subtitle && <Text style={styles.menuSubtitle}>{subtitle}</Text>}
+        </View>
+        {showChevron && <Icon name="chevron_right" style={styles.chevronIcon} />}
       </Pressable>
     );
   };
 
   return (
-    <View style={dynamicStyles.container}>
+    <View style={styles.container}>
       {/* Header */}
-      <View style={dynamicStyles.header}>
-        <Pressable 
-          style={({pressed}) => [
-            styles.backButton,
-            pressed && styles.backButtonPressed
-          ]} 
-          onPress={onBack}>
-          <Icon name="arrow_back_ios_new" style={dynamicStyles.backIcon} />
+      <View style={styles.header}>
+        <Pressable style={styles.backButton} onPress={onBack}>
+          <Icon name="arrow_back_ios_new" style={styles.backIcon} />
         </Pressable>
-        <Text style={dynamicStyles.headerTitle}>Ayarlar</Text>
+        <Text style={styles.headerTitle}>Ayarlar</Text>
         <View style={styles.headerSpacer} />
       </View>
 
       {/* Scrollable Content */}
-      <ScrollView 
-        style={styles.scrollView} 
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         {/* Section: HESAP */}
-        <View style={styles.sectionFirst}>
-          <Text style={dynamicStyles.sectionTitle}>HESAP</Text>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>HESAP</Text>
           <View style={styles.sectionContent}>
-            <MenuItem 
-              icon="edit" 
-              title="Profil Düzenle" 
-              onPress={() => navigate('editProfile')} 
-            />
-            <MenuItem 
-              icon="lock" 
-              title="Şifre Değiştir" 
-              onPress={() => navigate('changePassword')} 
-            />
-            <MenuItem 
-              icon="mail" 
-              title="E-posta Değiştir" 
-              onPress={() => navigate('changeEmail')} 
-            />
+            <MenuItem icon="edit" title="Profil Düzenle" />
+            <MenuItem icon="lock" title="Şifre Değiştir" />
+            <MenuItem icon="mail" title="E-posta Değiştir" />
           </View>
         </View>
 
         {/* Section: BİLDİRİMLER */}
         <View style={styles.section}>
-          <Text style={dynamicStyles.sectionTitle}>BİLDİRİMLER</Text>
+          <Text style={styles.sectionTitle}>BİLDİRİMLER</Text>
           <View style={styles.sectionContent}>
-            <View style={dynamicStyles.toggleItem}>
+            <View style={styles.toggleItem}>
               <View style={styles.toggleItemLeft}>
-                <View style={dynamicStyles.menuIconContainer}>
-                  <Icon name="notifications" style={dynamicStyles.menuIcon} />
+                <View style={styles.menuIconContainer}>
+                  <Icon name="notifications" style={styles.menuIcon} />
                 </View>
-                <Text style={dynamicStyles.menuTitle}>Push Bildirimleri</Text>
+                <Text style={styles.menuTitle}>Push Bildirimleri</Text>
               </View>
               <ToggleSwitch value={pushNotifications} onValueChange={setPushNotifications} />
             </View>
-            <View style={dynamicStyles.toggleItem}>
+            <View style={styles.toggleItem}>
               <View style={styles.toggleItemLeft}>
-                <View style={dynamicStyles.menuIconContainer}>
-                  <Icon name="mark_email_unread" style={dynamicStyles.menuIcon} />
+                <View style={styles.menuIconContainer}>
+                  <Icon name="mark_email_unread" style={styles.menuIcon} />
                 </View>
-                <Text style={dynamicStyles.menuTitle}>E-posta Bildirimleri</Text>
+                <Text style={styles.menuTitle}>E-posta Bildirimleri</Text>
               </View>
               <ToggleSwitch value={emailNotifications} onValueChange={setEmailNotifications} />
             </View>
-            <View style={dynamicStyles.toggleItem}>
+            <View style={styles.toggleItem}>
               <View style={styles.toggleItemLeft}>
-                <View style={dynamicStyles.menuIconContainer}>
-                  <Icon name="group_add" style={dynamicStyles.menuIcon} />
+                <View style={styles.menuIconContainer}>
+                  <Icon name="group_add" style={styles.menuIcon} />
                 </View>
-                <Text style={dynamicStyles.menuTitle}>Oda Davetleri</Text>
+                <Text style={styles.menuTitle}>Oda Davetleri</Text>
               </View>
               <ToggleSwitch value={roomInvites} onValueChange={setRoomInvites} />
             </View>
@@ -195,7 +116,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({onTabChange, onBack}) =>
 
         {/* Section: GİZLİLİK */}
         <View style={styles.section}>
-          <Text style={dynamicStyles.sectionTitle}>GİZLİLİK</Text>
+          <Text style={styles.sectionTitle}>GİZLİLİK</Text>
           <View style={styles.sectionContent}>
             <MenuItem icon="visibility" title="Profil Görünürlüğü" subtitle="Herkes" />
             <MenuItem icon="person_add" title="Kimler Beni Ekleyebilir" subtitle="Herkes" />
@@ -204,7 +125,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({onTabChange, onBack}) =>
 
         {/* Section: UYGULAMA */}
         <View style={styles.section}>
-          <Text style={dynamicStyles.sectionTitle}>UYGULAMA</Text>
+          <Text style={styles.sectionTitle}>UYGULAMA</Text>
           <View style={styles.sectionContent}>
             <MenuItem icon="dark_mode" title="Tema" subtitle="Koyu" />
             <MenuItem icon="language" title="Dil" subtitle="Türkçe" />
@@ -217,21 +138,12 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({onTabChange, onBack}) =>
 
         {/* Section: HESAP YÖNETİMİ */}
         <View style={styles.section}>
-          <Text style={dynamicStyles.sectionTitle}>HESAP YÖNETİMİ</Text>
+          <Text style={styles.sectionTitle}>HESAP YÖNETİMİ</Text>
           <View style={styles.sectionContent}>
-            <Pressable 
-              style={({pressed}) => [
-                dynamicStyles.dangerButton,
-                pressed && styles.dangerButtonPressed
-              ]}
-              onPress={handleLogout}>
+            <Pressable style={styles.dangerButton}>
               <Text style={styles.dangerButtonText}>Çıkış Yap</Text>
             </Pressable>
-            <Pressable 
-              style={({pressed}) => [
-                dynamicStyles.dangerButton,
-                pressed && styles.dangerButtonPressed
-              ]}>
+            <Pressable style={styles.dangerButton}>
               <Text style={styles.dangerButtonText}>Hesabı Sil</Text>
             </Pressable>
           </View>
@@ -239,7 +151,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({onTabChange, onBack}) =>
 
         {/* Version Info */}
         <View style={styles.versionContainer}>
-          <Text style={dynamicStyles.versionText}>MatchTalk v2.4.0</Text>
+          <Text style={styles.versionText}>MatchTalk v2.4.0</Text>
         </View>
       </ScrollView>
 
@@ -252,56 +164,30 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({onTabChange, onBack}) =>
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0b0d17',
+    backgroundColor: colors.backgroundLight,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16, // px-4
-    paddingTop: 24, // pt-6
-    paddingBottom: 16, // pb-4
-    backgroundColor: '#0b0d17',
-    ...(Platform.OS === 'web' ? {
-      position: 'sticky' as any,
-      top: 0,
-      zIndex: 50,
-    } : {}),
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.xxl,
+    paddingBottom: spacing.md,
+    backgroundColor: colors.backgroundLight,
+    zIndex: 50,
   },
   backButton: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 9999, // rounded-full
-    ...Platform.select({
-      web: {
-        cursor: 'pointer',
-        transition: 'all 0.2s',
-        ':hover': {
-          backgroundColor: 'rgba(0, 0, 0, 0.05)',
-        },
-        ':active': {
-          transform: 'scale(0.95)',
-        },
-      },
-    }),
-  },
-  backButtonPressed: {
-    backgroundColor: 'rgba(0, 0, 0, 0.05)',
-    transform: [{scale: 0.95}],
+    padding: spacing.sm,
   },
   backIcon: {
     fontSize: 24,
-    color: '#e2e8f0',
+    color: colors.textPrimary,
   },
   headerTitle: {
-    fontSize: 24, // text-2xl
-    fontWeight: '700', // font-bold
-    color: '#e2e8f0',
+    ...typography.h2,
+    color: colors.textPrimary,
     flex: 1,
     textAlign: 'center',
-    paddingRight: 40, // pr-10
   },
   headerSpacer: {
     width: 40,
@@ -310,214 +196,115 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: 16, // px-4
-    paddingBottom: 48, // pb-12
-    ...Platform.select({
-      web: {
-        // no-scrollbar
-        scrollbarWidth: 'none',
-        msOverflowStyle: 'none',
-        '&::-webkit-scrollbar': {
-          display: 'none',
-        },
-      },
-    }),
+    paddingHorizontal: spacing.md,
+    paddingBottom: 100,
   },
   section: {
-    marginTop: 24, // mt-6
-  },
-  sectionFirst: {
-    marginTop: 8, // mt-2
+    marginTop: spacing.lg,
   },
   sectionTitle: {
-    fontSize: 11, // text-xs
-    fontWeight: '600', // font-semibold
-    color: '#94A3B8', // text-text-secondary
+    fontSize: 11,
+    fontWeight: '600',
+    color: colors.textSecondary,
     textTransform: 'uppercase',
-    letterSpacing: 1.6, // tracking-[0.1em]
-    marginBottom: 8, // mb-2
-    paddingLeft: 4, // pl-1
+    letterSpacing: 1.6,
+    marginBottom: spacing.sm,
+    paddingLeft: spacing.xs,
   },
   sectionContent: {
-    gap: 8, // gap-2
+    gap: spacing.xs,
   },
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#0f172a', // dark surface
-    padding: 16, // p-4
-    borderRadius: 12, // rounded-xl (0.75rem)
-    ...Platform.select({
-      web: {
-        transition: 'background-color 0.15s',
-        cursor: 'pointer',
-        ':active': {
-          backgroundColor: '#111827', // dark active
-        },
-      },
-    }),
-  },
-  menuItemPressed: {
-    backgroundColor: '#111827', // dark active
-  },
-  menuItemLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16, // gap-4
-    flex: 1,
-  },
-  menuItemRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8, // gap-2
+    backgroundColor: colors.cardDark,
+    padding: spacing.md,
+    borderRadius: radius.xl,
+    gap: spacing.md,
   },
   menuIconContainer: {
-    width: 40, // size-10
+    width: 40,
     height: 40,
-    borderRadius: 8, // rounded-lg
-    backgroundColor: 'rgba(99, 102, 241, 0.16)', // bg-primary/10
+    borderRadius: radius.lg,
+    backgroundColor: `${colors.primary}1A`,
     alignItems: 'center',
     justifyContent: 'center',
-    flexShrink: 0,
   },
   menuIcon: {
     fontSize: 20,
-    color: '#c7d2fe', // text-primary
+    color: colors.primary,
   },
   menuTextContainer: {
     flex: 1,
   },
   menuTitle: {
-    fontSize: 15, // text-[15px]
-    fontWeight: '500', // font-medium
-    color: '#e2e8f0', // text-gray-900 (dark: text-white)
+    fontSize: 15,
+    fontWeight: '500',
+    color: colors.textPrimary,
   },
   menuSubtitle: {
-    fontSize: 14, // text-sm
-    color: '#94A3B8', // text-text-secondary
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginTop: spacing.xs / 2,
   },
   chevronIcon: {
     fontSize: 20,
-    color: '#9ca3af', // text-gray-400
+    color: colors.textMuted,
   },
   toggleItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#0f172a', // dark surface
-    padding: 16, // p-4
-    borderRadius: 12, // rounded-xl
+    backgroundColor: colors.cardDark,
+    padding: spacing.md,
+    borderRadius: radius.xl,
   },
   toggleItemLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16, // gap-4
+    gap: spacing.md,
     flex: 1,
   },
-  toggleWrapper: {
-    marginRight: 8, // mr-2
-  },
   toggleContainer: {
-    width: 48, // w-12
-    height: 32, // h-8
-    borderRadius: 16, // rounded-full
-    backgroundColor: '#1f2937', // dark track
-    padding: 4, // border-4
+    width: 48,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.border,
+    padding: 2,
     justifyContent: 'center',
-    position: 'relative',
   },
   toggleContainerActive: {
-    backgroundColor: '#6366f1', // primary color when checked
+    backgroundColor: colors.primary,
   },
   toggleThumb: {
-    width: 24, // w-6
-    height: 24, // h-6
-    borderRadius: 12, // rounded-full
-    backgroundColor: '#0b0d17',
-    position: 'absolute',
-    left: 4, // left-1
-    top: 4, // top-1
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#fff',
     transform: [{translateX: 0}],
-    ...Platform.select({
-      web: {
-        transition: 'transform 0.3s',
-      },
-    }),
   },
   toggleThumbActive: {
-    transform: [{translateX: 20}], // translateX(100%) = 24px (thumb width) - 4px (left) = 20px
-    backgroundColor: '#0b0d17',
+    transform: [{translateX: 16}],
   },
   dangerButton: {
-    backgroundColor: '#1f2937',
-    padding: 16, // p-4
-    borderRadius: 12, // rounded-xl
+    backgroundColor: colors.cardDark,
+    padding: spacing.md,
+    borderRadius: radius.xl,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#ef4444',
-  },
-  dangerButtonPressed: {
-    backgroundColor: '#111827', // active dark
   },
   dangerButtonText: {
-    fontSize: 15, // text-[15px]
-    fontWeight: '600', // font-medium
-    color: '#fca5a5', // soft red
+    fontSize: 15,
+    fontWeight: '500',
+    color: colors.danger,
   },
   versionContainer: {
-    width: '100%',
     alignItems: 'center',
-    paddingTop: 16, // pt-4
-    paddingBottom: 32, // pb-8
+    paddingVertical: spacing.xl,
   },
   versionText: {
-    fontSize: 11, // text-xs
-    color: '#94a3b8', // text-text-secondary
-  },
-  // Dark mode styles
-  containerDark: {
-    backgroundColor: '#0b0d17', // background-dark
-  },
-  headerDark: {
-    backgroundColor: 'rgba(11, 13, 23, 0.95)', // background-dark/95
-  },
-  headerTitleDark: {
-    color: '#e2e8f0', // text-white
-  },
-  backIconDark: {
-    color: '#e2e8f0', // text-white
-  },
-  sectionTitleDark: {
-    color: '#94A3B8', // text-text-secondary
-  },
-  menuItemDark: {
-    backgroundColor: '#0f172a', // bg-surface-dark
-  },
-  menuIconContainerDark: {
-    backgroundColor: '#111827', // bg-slate-700
-  },
-  menuIconDark: {
-    color: '#c7d2fe', // text-white
-  },
-  menuTitleDark: {
-    color: '#e2e8f0', // text-white
-  },
-  menuSubtitleDark: {
-    color: '#94A3B8', // text-text-secondary
-  },
-  toggleItemDark: {
-    backgroundColor: '#0f172a', // bg-surface-dark
-  },
-  toggleContainerDark: {
-    backgroundColor: '#1f2937', // bg-slate-600
-  },
-  dangerButtonDark: {
-    backgroundColor: '#1f2937', // bg-surface-dark
-  },
-  versionTextDark: {
-    color: '#94a3b8', // text-text-secondary/50
+    fontSize: 11,
+    color: `${colors.textSecondary}80`,
   },
 });
 
