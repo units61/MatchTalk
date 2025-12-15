@@ -77,22 +77,15 @@ const RoomScreen: React.FC<RoomScreenProps> = ({
     }
   }, [currentRoom, roomId]);
 
-  // Participants from currentRoom
-  const participants: Participant[] = currentRoom?.participants.map((p) => ({
-    id: p.id,
-    name: p.name,
-    avatar: p.avatar,
-    isActiveSpeaker: false,
-    isMuted: false,
-  })) || [
-    {id: '1', name: 'Alice', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBqw3A6AVQlVdkOIjOr0QcEz7B1Oro4-IJyHlBmXRZZJumEBzZUnikN3Y0mbypIduNCHAEwvYq0gWx6_5rYcmcIfW4wKfDONrkQ2k461bxMXXd-sJZU_hnrGNWSBGN-IEL7qUyOHbYcrXrpmfKwYjmHnRWih761EBRCVhjJQPe8EPqF6nlch_kd8pPs6a4jo3fL_wrf8rAsPMcnd7x98nzJvA1xIvp8I_57WdLRrVm4CIA_1mbzwIRnfJQdIvVDDZN7LVRqhfKMxnE'},
-    {id: '2', name: 'David', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDvPNrky7iyWZy8Jtdf7ClH1eWO_ylsot99E9LBAS67GoOytQk_qSYhOzksiwE3TYg8uADZLrhxy1Awz7b3BgMUmkLaCb5Sj7IJU5P7tYBEUwCFQspg4IQ3sdLQ-2UVJEo8sU98jaL2V-gU4-bXVMYdtZ7gBV8IctwMZFuJ_bbxa_URMycLp5rRTCNGAF7WgrgyxwNn9lhEZMF_t_f_D8wJbyTiorgsnAjth_uHXCJUNyH7y0O5Rz3p3GFI8itNjkGqJEHFr5dBJDA', isActiveSpeaker: true},
-    {id: '3', name: 'Sarah', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBnIbGfZ53MIDg4vQGlxdY_9P25pAKdbBT1k_iENmp0SSkPl5af0Xw8mOVWydXaKwxY4itF2-pt_DZMhzzG9nTe7TZTGN6hIDhWJM1uHcgZKV4UvzktPc0yuhlDTVls3dAQLff3xTdOqkp7e9VhqvYBKwTv0vvII5_5kzQkyjN4aAIBmqjFaQyY1JhSHmbG0cTxyN1D363BMgMd_XgSNqvdcif7dLUd3iqQoZrcsf5y9FsC6X1h9wGr2PRvZc3QTd233xFNwwIIOGk'},
-    {id: '4', name: 'Jean-Paul', avatar: undefined},
-    {id: '5', name: 'Kenji', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCrCvwGCiQh3tcmiX7u3NYJ_btxqFvLSSTCow33ccnYvJ5G9tjbOqNOmxqSHtNXGTzqVfiQ2jEuT9B_JfQ0fsZl8Gb2qj8z-okcQUEmtxt5kzVBVzvDVxQ0Bh2NfVlds29P85GABF6oRBCeKqe5HF71gGz3BK4Hlkf0CsSRgqfKvh3I1EU7Pw7VvJ_5vayw0mC96lR-AQPgtLdyW6znjgHuUclbQCtwCp2kSRnLHICu0HvQ4WRmC2iXBEMM-7BblxLDQ0kfVpp55TM', isMuted: true},
-    {id: '6', name: 'Ghost', avatar: undefined},
-    {id: '7', name: 'Elena', avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCUpavZDQDcQovXhiLaArzjYfVeZkqZzauF4BJb2OeDK3FbquwtdVdlnvNM0TlxKTJ6umj-Yroa2p2kIRQWo0LvBcq4UDaOCGAc9YJmFN3qo5VaZt5jiVzThDLvV0hxTa4IkMqhNpX_ezsMLBFBPym4xAEza7FjxmJmXQso6QYhT8vwSBAHJ2w41Hxfa2s4n_06iKFQSWVRJ7frlYN9FS2LKVAT5dpQqPHt-x_4aQ56IKXgTRoZE9DN7WQ-q-WwSBDDGjSlh9CIMxU'},
-  ]);
+  // Participants from currentRoom (fallback: empty array)
+  const participants: Participant[] =
+    currentRoom?.participants?.map((p) => ({
+      id: p.id,
+      name: p.name,
+      avatar: p.avatar,
+      isActiveSpeaker: false,
+      isMuted: false,
+    })) ?? [];
 
   // Timer countdown
   useEffect(() => {

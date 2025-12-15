@@ -20,27 +20,35 @@ const BottomNav: React.FC<BottomNavProps> = ({activeTab, onTabChange}) => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.content}>
-        {tabs.map((tab) => {
-          const isActive = activeTab === tab.id;
-          return (
-            <Pressable
-              key={tab.id}
-              style={styles.tab}
-              onPress={() => onTabChange(tab.id)}>
-              <View style={styles.tabContent}>
-                <Icon
-                  name={tab.icon}
-                  style={[
-                    styles.icon,
-                    isActive && styles.iconActive,
-                  ]}
-                />
-                {isActive && <View style={styles.indicator} />}
-              </View>
-            </Pressable>
-          );
-        })}
+      <View style={styles.navCard}>
+        <View style={styles.content}>
+          {tabs.map((tab) => {
+            const isActive = activeTab === tab.id;
+            return (
+              <Pressable
+                key={tab.id}
+                style={styles.tab}
+                onPress={() => onTabChange(tab.id)}>
+                <View style={styles.tabContent}>
+                  <View
+                    style={[
+                      styles.iconWrapper,
+                      isActive && styles.iconWrapperActive,
+                    ]}>
+                    <Icon
+                      name={tab.icon}
+                      style={[
+                        styles.icon,
+                        isActive && styles.iconActive,
+                      ]}
+                    />
+                  </View>
+                  {isActive && <View style={styles.indicator} />}
+                </View>
+              </Pressable>
+            );
+          })}
+        </View>
       </View>
     </View>
   );
@@ -48,10 +56,7 @@ const BottomNav: React.FC<BottomNavProps> = ({activeTab, onTabChange}) => {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#fff',
-    borderTopWidth: 1,
-    borderTopColor: '#e2e8f0',
-    height: 84,
+    backgroundColor: 'transparent',
     paddingBottom: spacing.xl,
     paddingHorizontal: spacing.xl,
     ...Platform.select({
@@ -64,17 +69,33 @@ const styles = StyleSheet.create({
       },
     }),
   },
+  navCard: {
+    borderRadius: radius.xl,
+    backgroundColor: 'rgba(15, 23, 42, 0.9)',
+    borderWidth: 1,
+    borderColor: 'rgba(148, 163, 184, 0.5)',
+    shadowColor: '#000',
+    shadowOpacity: 0.35,
+    shadowRadius: 18,
+    shadowOffset: {width: 0, height: 8},
+    ...Platform.select({
+      web: {
+        backdropFilter: 'blur(18px)' as any,
+      },
+    }),
+  },
   content: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    height: '100%',
-    maxWidth: 400,
+    height: 72,
+    maxWidth: 420,
     alignSelf: 'center',
     width: '100%',
+    paddingHorizontal: spacing.lg,
   },
   tab: {
-    width: 48,
+    width: 56,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -84,17 +105,27 @@ const styles = StyleSheet.create({
     gap: spacing.xs / 2,
   },
   icon: {
-    fontSize: 28,
-    color: colors.textSecondary,
+    fontSize: 22,
+    color: 'rgba(226,232,240,0.8)',
   },
   iconActive: {
-    color: colors.primaryIndigo,
+    color: '#22d3ee',
+  },
+  iconWrapper: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconWrapperActive: {
+    backgroundColor: 'rgba(56,189,248,0.18)',
   },
   indicator: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: colors.primaryIndigo,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#22d3ee',
   },
 });
 

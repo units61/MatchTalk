@@ -1,6 +1,5 @@
 import React, {useState, useEffect} from 'react';
 import {View, Text, StyleSheet, ScrollView, Pressable, Image, Platform} from 'react-native';
-import {useNavigate} from 'react-router-dom';
 import Icon from '../../components/common/Icon';
 import Avatar from '../../components/common/Avatar';
 import BottomNav from '../../components/ui/BottomNav';
@@ -20,7 +19,6 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({onTabChange}) => {
   const [activeNavTab, setActiveNavTab] = useState<'home' | 'friends' | 'profile' | 'settings'>('profile');
   const {user} = useAuthStore();
   const {friends} = useFriendsStore();
-  const navigate = useNavigate();
   const [stats, setStats] = useState({
     hours: 0,
     rooms: 0,
@@ -57,8 +55,6 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({onTabChange}) => {
   const handleNavTabChange = (tab: 'home' | 'friends' | 'profile' | 'settings') => {
     setActiveNavTab(tab);
     onTabChange?.(tab);
-    // React Router tab navigasyonu
-    navigate(`/${tab}`);
   };
 
   // Mock level/XP (will be calculated later)

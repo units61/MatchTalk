@@ -1,19 +1,11 @@
-import React, {useState, useEffect} from 'react';
-import {View, Text, StyleSheet, ScrollView, Pressable, Platform, RefreshControl} from 'react-native';
+import React, {useState} from 'react';
+import {View, StyleSheet, Platform} from 'react-native';
 import {useNavigate} from 'react-router-dom';
-import Icon from '../../components/common/Icon';
-import RoomCard from '../../components/room/RoomCard';
 import BottomNav from '../../components/ui/BottomNav';
-import FAB from '../../components/ui/FAB';
-import Avatar from '../../components/common/Avatar';
 import VoiceMatchHero from '../../components/home/VoiceMatchHero';
 import {colors} from '../../theme/colors';
 import {spacing} from '../../theme/spacing';
-import {typography} from '../../theme/typography';
 import {radius} from '../../theme/radius';
-import {useRoomsStore} from '../../stores/roomsStore';
-import {useAuthStore} from '../../stores/authStore';
-import {useWebSocket} from '../../hooks/useWebSocket';
 
 interface HomeScreenProps {
   onTabChange?: (tab: 'home' | 'friends' | 'profile' | 'settings') => void;
@@ -21,151 +13,19 @@ interface HomeScreenProps {
 
 const HomeScreen: React.FC<HomeScreenProps> = ({onTabChange}) => {
   const [activeTab, setActiveTab] = useState<'home' | 'friends' | 'profile' | 'settings'>('home');
-  const {rooms, loading, fetchRooms, joinRoom, updateRoom} = useRoomsStore();
-  const {user} = useAuthStore();
-  const {on, off} = useWebSocket();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    fetchRooms();
-  }, [fetchRooms]);
-
-  // Real-time room updates
-  useEffect(() => {
-    // Listen for room updates
-    const handleRoomUpdate = (data: {room?: any; joinedUser?: {id: string}; leftUser?: {id: string}}) => {
-      if (data.room) {
-        updateRoom(data.room.id, data.room);
-      } else if (data.joinedUser || data.leftUser) {
-        // Refresh rooms list when someone joins/leaves
-        fetchRooms();
-      }
-    };
-
-    // Listen for new room created
-    const handleRoomCreated = (data: {room: any}) => {
-      fetchRooms();
-    };
-
-    // Listen for room closed
-    const handleRoomClosed = (data: {roomId: string; reason: string}) => {
-      fetchRooms();
-    };
-
-    on('room-update', handleRoomUpdate);
-    on('room-created', handleRoomCreated);
-    on('room-closed', handleRoomClosed);
-
-    return () => {
-      off('room-update', handleRoomUpdate);
-      off('room-created', handleRoomCreated);
-      off('room-closed', handleRoomClosed);
-    };
-  }, [on, off, fetchRooms, updateRoom]);
 
   const handleTabChange = (tab: 'home' | 'friends' | 'profile' | 'settings') => {
     setActiveTab(tab);
     onTabChange?.(tab);
-    // React Router ile gerçek sayfa navigasyonu
     navigate(`/${tab}`);
-  };
-
-  const handleRefresh = () => {
-    fetchRooms();
-  };
-
-  const handleJoinRoom = async (roomId: string) => {
-    try {
-      await joinRoom(roomId);
-      // Navigate to room screen would go here
-      console.log('Joined room:', roomId);
-    } catch (error) {
-      console.error('Failed to join room:', error);
-    }
   };
 
   return (
     <View style={styles.container}>
-      {/* Top App Bar */}
-      <View style={styles.header}>
-        {/* Left: Logo */}
-        <View style={styles.logoContainer}>
-          <View style={styles.logoIcon}>
-            <Icon name="graphic_eq" style={styles.logoIconText} />
-          </View>
-          <Text style={styles.logoText}>MatchTalk</Text>
-        </View>
-
-        {/* Right: Actions */}
-        <View style={styles.headerActions}>
-          <Pressable style={styles.notificationButton}>
-            <Icon name="notifications" style={styles.notificationIcon} />
-            <View style={styles.badge} />
-          </Pressable>
-          <Pressable style={styles.profileButton}>
-            <Avatar
-              name={user?.name || 'Kullanıcı'}
-              avatar={user?.avatar}
-              size={40}
-              showBorder
-            />
-          </Pressable>
-        </View>
-      </View>
-
-      {/* Main Content */}
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl refreshing={loading} onRefresh={handleRefresh} />
-        }>
-        {/* Voice match hero */}
+      <View style={styles.heroWrapper}>
         <VoiceMatchHero />
-
-        {/* Section Header */}
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Aktif Odalar</Text>
-          <Pressable onPress={handleRefresh}>
-            <Text style={styles.seeAllText}>Yenile</Text>
-          </Pressable>
-        </View>
-
-        {/* Room Cards */}
-        {rooms.length === 0 && !loading ? (
-          <View style={styles.emptyState}>
-            <Icon name="meeting_room" style={styles.emptyIcon} />
-            <Text style={styles.emptyText}>Henüz aktif oda yok</Text>
-            <Text style={styles.emptySubtext}>Yeni bir oda oluşturun veya bekleyin</Text>
-          </View>
-        ) : (
-          rooms.map((room) => (
-            <RoomCard
-              key={room.id}
-              id={room.id}
-              name={room.name}
-              category={room.category}
-              timeLeft={room.timeLeftSec}
-              participants={room.participants}
-              maxParticipants={room.maxParticipants}
-              maleCount={room.maleCount}
-              femaleCount={room.femaleCount}
-              onJoin={() => handleJoinRoom(room.id)}
-            />
-          ))
-        )}
-
-        {/* Loading Indicator */}
-        {loading && (
-          <View style={styles.loadingIndicator}>
-            <View style={styles.loadingBar} />
-          </View>
-        )}
-      </ScrollView>
-
-      {/* Floating Action Button */}
-      <FAB onPress={() => console.log('New room')} />
+      </View>
 
       {/* Bottom Navigation */}
       <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
@@ -176,7 +36,25 @@ const HomeScreen: React.FC<HomeScreenProps> = ({onTabChange}) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.backgroundLightMain,
+    backgroundColor: '#0f0c29',
+    ...Platform.select({
+      web: {
+        // Create Animated Stitch Video'daki gradient'e yakın
+        backgroundImage:
+          'linear-gradient(to bottom right, #0f0c29, #302b63, #24243e)' as any,
+        backgroundRepeat: 'no-repeat',
+        backgroundSize: 'cover',
+        minHeight: '100vh' as any,
+      },
+    }),
+  },
+  heroWrapper: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.xl,
+    paddingBottom: 140,
   },
   header: {
     flexDirection: 'row',
