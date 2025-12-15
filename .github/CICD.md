@@ -227,3 +227,5 @@ GitHub Actions varsayılan olarak email bildirimleri gönderir. Repository setti
 - [Docker Buildx](https://docs.docker.com/buildx/)
 - [Snyk Documentation](https://docs.snyk.io/)
 - [CodeQL Documentation](https://codeql.github.com/docs/)
+
+

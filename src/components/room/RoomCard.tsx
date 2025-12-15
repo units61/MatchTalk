@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useMemo} from 'react';
 import {View, Text, StyleSheet, Pressable, Image} from 'react-native';
 import AvatarGroup from '../common/AvatarGroup';
 import TimerChip from '../ui/TimerChip';
@@ -6,7 +6,6 @@ import GenderBar from '../ui/GenderBar';
 import Icon from '../common/Icon';
 import {colors} from '../../theme/colors';
 import {spacing} from '../../theme/spacing';
-import {typography} from '../../theme/typography';
 import {radius} from '../../theme/radius';
 
 interface RoomCardProps {
@@ -26,7 +25,7 @@ interface RoomCardProps {
   onJoin: () => void;
 }
 
-const RoomCard: React.FC<RoomCardProps> = ({
+const RoomCardComponent: React.FC<RoomCardProps> = ({
   name,
   category,
   timeLeft,
@@ -36,13 +35,24 @@ const RoomCard: React.FC<RoomCardProps> = ({
   femaleCount,
   onJoin,
 }) => {
-  const formatTime = (seconds: number): string => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
+  const formatTime = useMemo(() => {
+    const mins = Math.floor(timeLeft / 60);
+    const secs = timeLeft % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
+  }, [timeLeft]);
 
-  const malePercentage = (maleCount / participants.length) * 100;
+  const malePercentage = useMemo(() => {
+    if (participants.length === 0) return 0;
+    return (maleCount / participants.length) * 100;
+  }, [maleCount, participants.length]);
+
+  const avatarData = useMemo(() => {
+    return participants.map((p) => ({
+      id: p.id,
+      name: p.name,
+      avatar: p.avatar,
+    }));
+  }, [participants]);
 
   return (
     <View style={styles.container}>
@@ -52,17 +62,13 @@ const RoomCard: React.FC<RoomCardProps> = ({
           <Text style={styles.title}>{name}</Text>
           <Text style={styles.category}>{category}</Text>
         </View>
-        <TimerChip time={formatTime(timeLeft)} />
+        <TimerChip time={formatTime} />
       </View>
 
       {/* Avatars */}
       <View style={styles.avatarsContainer}>
         <AvatarGroup
-          avatars={participants.map((p) => ({
-            id: p.id,
-            name: p.name,
-            avatar: p.avatar,
-          }))}
+          avatars={avatarData}
           maxVisible={4}
           size={40}
         />
@@ -86,7 +92,12 @@ const RoomCard: React.FC<RoomCardProps> = ({
         />
 
         {/* Join Button */}
-        <Pressable style={styles.joinButton} onPress={onJoin}>
+        <Pressable
+          style={styles.joinButton}
+          onPress={onJoin}
+          accessibilityRole="button"
+          accessibilityLabel={`${name} odasına katıl`}
+          accessibilityHint="Odaya katılmak için tıklayın">
           <Text style={styles.joinButtonText}>Katıl</Text>
         </Pressable>
       </View>
@@ -164,5 +175,26 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
 });
+
+// Memoize component to prevent unnecessary re-renders
+const RoomCard = React.memo(RoomCardComponent, (prevProps, nextProps) => {
+  // Custom comparison function for better performance
+  return (
+    prevProps.id === nextProps.id &&
+    prevProps.name === nextProps.name &&
+    prevProps.category === nextProps.category &&
+    prevProps.timeLeft === nextProps.timeLeft &&
+    prevProps.maxParticipants === nextProps.maxParticipants &&
+    prevProps.maleCount === nextProps.maleCount &&
+    prevProps.femaleCount === nextProps.femaleCount &&
+    prevProps.participants.length === nextProps.participants.length &&
+    prevProps.participants.every((p, i) => 
+      p.id === nextProps.participants[i]?.id &&
+      p.name === nextProps.participants[i]?.name
+    )
+  );
+});
+
+RoomCard.displayName = 'RoomCard';
 
 export default RoomCard;

@@ -1,11 +1,10 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useMemo, useCallback} from 'react';
 import {View, Text, StyleSheet, Pressable, Platform} from 'react-native';
 import Icon from '../../components/common/Icon';
 import ParticipantAvatar from '../../components/room/ParticipantAvatar';
 import VoteModal from '../../components/room/VoteModal';
 import {colors} from '../../theme/colors';
 import {spacing} from '../../theme/spacing';
-import {typography} from '../../theme/typography';
 import {radius} from '../../theme/radius';
 import {useWebSocket} from '../../hooks/useWebSocket';
 import {useRoomsStore} from '../../stores/roomsStore';
@@ -13,6 +12,8 @@ import {useAgoraStore} from '../../stores/agoraStore';
 import {useAuthStore} from '../../stores/authStore';
 import {shareRoomLink} from '../../utils/shareUtils';
 import {useToastStore} from '../../stores/toastStore';
+import {ROOM_TIMER, AVATAR_POSITIONS} from '../../constants/room';
+import {useResponsive} from '../../hooks/useResponsive';
 
 interface Participant {
   id: string;
@@ -37,8 +38,10 @@ const RoomScreen: React.FC<RoomScreenProps> = ({
 }) => {
   const [timeLeft, setTimeLeft] = useState(272); // 4:32 in seconds
   const [showVoteModal, setShowVoteModal] = useState(false);
-  const [voteTimer, setVoteTimer] = useState(10); // 10 saniye oylama süresi
-  const {currentRoom, updateRoom} = useRoomsStore();
+  const [voteTimer, setVoteTimer] = useState(ROOM_TIMER.VOTE_DURATION_SEC);
+  // Use selectors to prevent unnecessary re-renders
+  const currentRoom = useRoomsStore((state) => state.currentRoom);
+  const updateRoom = useRoomsStore((state) => state.updateRoom);
   const {joinRoom: wsJoinRoom, leaveRoom: wsLeaveRoom, on, off, voteExtension} = useWebSocket();
   const {
     isMuted,
@@ -50,6 +53,7 @@ const RoomScreen: React.FC<RoomScreenProps> = ({
   } = useAgoraStore();
   const {user} = useAuthStore();
   const {showToast} = useToastStore();
+  const {isMobile, isTablet, isDesktop, width} = useResponsive();
 
   // Agora WebRTC: Join channel when roomId is available
   useEffect(() => {
@@ -113,9 +117,9 @@ const RoomScreen: React.FC<RoomScreenProps> = ({
     joinRoomAsync();
 
     // Listen for room updates
-    const handleRoomUpdate = (data: any) => {
-      if (data.room) {
-        updateRoom(roomId, data.room);
+    const handleRoomUpdate = (data: {room?: {id: string; [key: string]: unknown}; joinedUser?: {id: string}; leftUser?: {id: string}}) => {
+      if (data.room && data.room.id === roomId) {
+        updateRoom(roomId, data.room as any);
       }
     };
 
@@ -131,7 +135,7 @@ const RoomScreen: React.FC<RoomScreenProps> = ({
       if (data.roomId === roomId) {
         console.log(`[RoomScreen] Extension vote started for room ${roomId}, timeLeft: ${data.timeLeft}`);
         setShowVoteModal(true);
-        setVoteTimer(10); // 10 saniye oylama süresi başlat
+        setVoteTimer(ROOM_TIMER.VOTE_DURATION_SEC);
       }
     };
 
@@ -168,7 +172,7 @@ const RoomScreen: React.FC<RoomScreenProps> = ({
   }, [currentRoom, roomId]);
 
   // Combine participants from currentRoom (backend) and remoteUsers (Agora)
-  const participants: Participant[] = React.useMemo(() => {
+  const participants: Participant[] = useMemo(() => {
     const roomParticipants = currentRoom?.participants || [];
     
     // Create a map of participants by ID for quick lookup
@@ -203,6 +207,21 @@ const RoomScreen: React.FC<RoomScreenProps> = ({
     return Array.from(participantMap.values());
   }, [currentRoom?.participants, remoteUsers]);
 
+  // Use constant avatar positions
+  const avatarPositions = AVATAR_POSITIONS;
+
+  // Memoize formatTime function
+  const formatTime = useCallback((seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  }, []);
+
+  // Memoize progress calculation
+  const progress = useMemo(() => {
+    return ((ROOM_TIMER.DEFAULT_DURATION_SEC - timeLeft) / ROOM_TIMER.DEFAULT_DURATION_SEC) * 100;
+  }, [timeLeft]);
+
   // Timer countdown
   // Oylama süresi timer'ı (10 saniye)
   useEffect(() => {
@@ -224,25 +243,6 @@ const RoomScreen: React.FC<RoomScreenProps> = ({
     return () => clearInterval(interval);
   }, [showVoteModal]);
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  const progress = ((300 - timeLeft) / 300) * 100; // 5 minutes = 300 seconds
-
-  // Avatar positions in a circle
-  const avatarPositions = [
-    {top: '5%', left: '50%', transform: [{translateX: -40}, {translateY: -10}]}, // Top
-    {top: '15%', right: '15%'}, // Top Right
-    {top: '50%', right: '5%', transform: [{translateY: -40}]}, // Right
-    {bottom: '15%', right: '15%'}, // Bottom Right
-    {bottom: '5%', left: '50%', transform: [{translateX: -40}, {translateY: 10}]}, // Bottom
-    {bottom: '15%', left: '15%'}, // Bottom Left
-    {top: '50%', left: '5%', transform: [{translateY: -40}]}, // Left
-    {top: '15%', left: '15%'}, // Top Left
-  ];
 
   return (
     <View style={styles.container}>
@@ -251,10 +251,19 @@ const RoomScreen: React.FC<RoomScreenProps> = ({
 
       {/* Header */}
       <View style={styles.header}>
-        <Pressable style={styles.headerButton} onPress={onBack}>
+        <Pressable
+          style={styles.headerButton}
+          onPress={onBack}
+          accessibilityRole="button"
+          accessibilityLabel="Geri dön"
+          accessibilityHint="Önceki sayfaya dön">
           <Icon name="arrow_back_ios_new" style={styles.headerIcon} />
         </Pressable>
-        <Text style={styles.headerTitle} numberOfLines={1}>
+        <Text
+          style={styles.headerTitle}
+          numberOfLines={1}
+          accessibilityRole="header"
+          accessibilityLabel={`Oda: ${roomName}`}>
           {roomName}
         </Text>
         <View style={styles.headerRight}>
@@ -275,10 +284,18 @@ const RoomScreen: React.FC<RoomScreenProps> = ({
                   });
                 }
               }
-            }}>
+            }}
+            accessibilityRole="button"
+            accessibilityLabel="Oda linkini paylaş"
+            accessibilityHint="Oda linkini panoya kopyala">
             <Icon name="share" style={styles.headerIcon} />
           </Pressable>
-          <Pressable style={styles.headerButton} onPress={onLeave}>
+          <Pressable
+            style={styles.headerButton}
+            onPress={onLeave}
+            accessibilityRole="button"
+            accessibilityLabel="Odadan ayrıl"
+            accessibilityHint="Odadan çıkmak için tıklayın">
             <Icon name="logout" style={styles.headerIcon} />
           </Pressable>
         </View>
@@ -294,7 +311,12 @@ const RoomScreen: React.FC<RoomScreenProps> = ({
               {/* SVG Progress Ring - Using View with border for simplicity */}
               <View style={styles.progressRingBackground} />
               <View style={[styles.progressRingFill, {width: `${progress}%`}]} />
-              <Text style={styles.timerText}>{formatTime(timeLeft)}</Text>
+              <Text
+                style={styles.timerText}
+                accessibilityLabel={`Kalan süre: ${formatTime(timeLeft)}`}
+                accessibilityLiveRegion="polite">
+                {formatTime(timeLeft)}
+              </Text>
             </View>
           </View>
 
@@ -302,7 +324,11 @@ const RoomScreen: React.FC<RoomScreenProps> = ({
           {participants.map((participant, index) => {
             const position = avatarPositions[index] || {};
             return (
-              <View key={participant.id} style={[styles.avatarWrapper, position]}>
+              <View
+                key={participant.id}
+                style={[styles.avatarWrapper, position]}
+                accessibilityLabel={`Katılımcı: ${participant.name}${participant.isMuted ? ', Mikrofon kapalı' : ''}${participant.isActiveSpeaker ? ', Konuşuyor' : ''}`}
+                accessibilityRole="text">
                 <ParticipantAvatar
                   name={participant.name}
                   avatar={participant.avatar}
@@ -316,7 +342,11 @@ const RoomScreen: React.FC<RoomScreenProps> = ({
 
           {/* Invite Slot (8th position) */}
           <View style={[styles.avatarWrapper, styles.inviteSlot, avatarPositions[7]]}>
-            <Pressable style={styles.inviteButton}>
+            <Pressable
+              style={styles.inviteButton}
+              accessibilityRole="button"
+              accessibilityLabel="Arkadaş davet et"
+              accessibilityHint="Odaya arkadaş davet etmek için tıklayın">
               <Icon name="add" style={styles.inviteIcon} />
             </Pressable>
             <Text style={styles.inviteText}>Invite</Text>
@@ -330,7 +360,11 @@ const RoomScreen: React.FC<RoomScreenProps> = ({
         {/* Mic Toggle */}
         <Pressable
           style={[styles.micButton, !isMuted ? styles.micButtonOn : styles.micButtonOff]}
-          onPress={() => toggleMute()}>
+          onPress={() => toggleMute()}
+          accessibilityRole="button"
+          accessibilityLabel={isMuted ? 'Mikrofonu aç' : 'Mikrofonu kapat'}
+          accessibilityState={{checked: !isMuted}}
+          accessibilityHint="Mikrofon durumunu değiştir">
           <Icon name={!isMuted ? 'mic' : 'mic_off'} style={styles.micIcon} />
         </Pressable>
         {/* Leave Button */}
@@ -348,7 +382,10 @@ const RoomScreen: React.FC<RoomScreenProps> = ({
                 console.error('Error leaving room:', error);
                 onLeave?.();
               }
-            }}>
+            }}
+            accessibilityRole="button"
+            accessibilityLabel="Odadan ayrıl"
+            accessibilityHint="Odadan çıkmak ve ana sayfaya dönmek için tıklayın">
             <View style={styles.leaveButtonInner}>
               <Icon name="call_end" style={styles.leaveIcon} />
             </View>
@@ -449,6 +486,11 @@ const styles = StyleSheet.create({
     maxWidth: 400,
     aspectRatio: 1,
     position: 'relative',
+    ...Platform.select({
+      web: {
+        maxWidth: 'min(400px, 90vw)',
+      },
+    }),
   },
   timerContainer: {
     position: 'absolute',

@@ -1,4 +1,5 @@
 import {create} from 'zustand';
+import {TOAST_CONFIG} from '../constants/app';
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info';
 
@@ -23,7 +24,7 @@ let toastIdCounter = 0;
 export const useToastStore = create<ToastState>((set) => ({
   toasts: [],
 
-  showToast: (message: string, type: ToastType = 'info', duration: number = 3000) => {
+  showToast: (message: string, type: ToastType = 'info', duration: number = TOAST_CONFIG.DEFAULT_DURATION) => {
     const id = `toast-${++toastIdCounter}`;
     const toast: Toast = {
       id,
@@ -64,12 +65,14 @@ export const toast = {
   success: (message: string, duration?: number) =>
     useToastStore.getState().showToast(message, 'success', duration),
   error: (message: string, duration?: number) =>
-    useToastStore.getState().showToast(message, 'error', duration || 5000),
+    useToastStore.getState().showToast(message, 'error', duration || TOAST_CONFIG.ERROR_DURATION),
   warning: (message: string, duration?: number) =>
     useToastStore.getState().showToast(message, 'warning', duration),
   info: (message: string, duration?: number) =>
     useToastStore.getState().showToast(message, 'info', duration),
 };
+
+
 
 
 

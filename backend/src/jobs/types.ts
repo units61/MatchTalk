@@ -37,3 +37,5 @@ export interface AnalyticsAggregationJobData {
   };
   eventType?: string;
 }
+
+

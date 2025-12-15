@@ -1,6 +1,8 @@
 import axios, {AxiosInstance, AxiosError, InternalAxiosRequestConfig} from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {config} from './config';
+import {handleError, createErrorHandler} from '../utils/errorHandler';
+import {API_CONFIG} from '../constants/app';
 
 export interface ApiResponse<T> {
   success: boolean;
@@ -8,19 +10,73 @@ export interface ApiResponse<T> {
   error?: string;
 }
 
+interface RetryConfig {
+  retries: number;
+  retryDelay: number;
+  retryCondition?: (error: AxiosError) => boolean;
+}
+
+const DEFAULT_RETRY_CONFIG: RetryConfig = {
+  retries: API_CONFIG.RETRY_ATTEMPTS,
+  retryDelay: API_CONFIG.RETRY_DELAY,
+  retryCondition: (error: AxiosError) => {
+    // Retry on network errors or 5xx server errors
+    return (
+      !error.response ||
+      (error.response.status >= 500 && error.response.status < 600) ||
+      error.code === 'ECONNABORTED' || // Timeout
+      error.code === 'ERR_NETWORK' // Network error
+    );
+  },
+};
+
 class ApiClient {
   private client: AxiosInstance;
+  private errorHandler = createErrorHandler({component: 'ApiClient'});
 
   constructor() {
     this.client = axios.create({
       baseURL: config.api.baseUrl,
-      timeout: 10000,
+      timeout: API_CONFIG.TIMEOUT,
       headers: {
         'Content-Type': 'application/json',
       },
     });
 
     this.setupInterceptors();
+  }
+
+  /**
+   * Retry request with exponential backoff
+   */
+  private async retryRequest<T>(
+    requestFn: () => Promise<T>,
+    retryConfig: RetryConfig = DEFAULT_RETRY_CONFIG,
+    attempt: number = 1
+  ): Promise<T> {
+    try {
+      return await requestFn();
+    } catch (error) {
+      const axiosError = error as AxiosError;
+      
+      // Check if we should retry
+      if (
+        attempt <= retryConfig.retries &&
+        retryConfig.retryCondition?.(axiosError)
+      ) {
+        // Calculate delay with exponential backoff
+        const delay = retryConfig.retryDelay * Math.pow(2, attempt - 1);
+        
+        // Wait before retrying
+        await new Promise((resolve) => setTimeout(resolve, delay));
+        
+        // Retry
+        return this.retryRequest(requestFn, retryConfig, attempt + 1);
+      }
+      
+      // No more retries, throw error
+      throw error;
+    }
   }
 
   private setupInterceptors() {
@@ -49,32 +105,76 @@ class ApiClient {
           const status = error.response.status;
           
           if (status === 401) {
-            // Unauthorized - Clear token and redirect to login
-            await AsyncStorage.removeItem('auth_token');
-            // You can dispatch a logout action here if using a global state
+            // Unauthorized - Try to refresh token first (if refresh endpoint exists)
+            const token = await AsyncStorage.getItem('auth_token');
+            if (token) {
+              try {
+                // TODO: Implement token refresh when backend endpoint is available
+                // const {authApi} = await import('../services/api/authApi');
+                // await authApi.refreshToken();
+                // Retry the original request
+                // return this.client.request(error.config!);
+              } catch (refreshError) {
+                // Refresh failed, clear token and logout
+                await AsyncStorage.removeItem('auth_token');
+                // Dispatch logout action if available
+                if (typeof window !== 'undefined' && (window as any).authStore) {
+                  (window as any).authStore.getState().logout();
+                }
+              }
+            } else {
+              await AsyncStorage.removeItem('auth_token');
+            }
           }
 
-          // Return the error response
-          return Promise.reject(error);
+          // Use error handler for user-friendly messages
+          const {userMessage} = this.errorHandler(error, {
+            action: 'api_request',
+            additionalData: {
+              status,
+              url: error.config?.url,
+            },
+          });
+
+          // Create new error with user-friendly message
+          const apiError = error.response.data as ApiResponse<unknown>;
+          const errorMessage = apiError?.error || userMessage;
+          const enhancedError = new Error(errorMessage);
+          (enhancedError as any).status = status;
+          (enhancedError as any).originalError = error;
+          
+          return Promise.reject(enhancedError);
         } else if (error.request) {
           // Request made but no response
-          return Promise.reject(new Error('Ağ hatası. Lütfen bağlantınızı kontrol edin.'));
+          const {userMessage} = this.errorHandler(error, {
+            action: 'api_request',
+            additionalData: {
+              url: error.config?.url,
+            },
+          });
+          return Promise.reject(new Error(userMessage));
         } else {
           // Something else happened
-          return Promise.reject(error);
+          const {userMessage} = this.errorHandler(error, {
+            action: 'api_request',
+          });
+          return Promise.reject(new Error(userMessage));
         }
       },
     );
   }
 
-  async get<T>(url: string, config?: InternalAxiosRequestConfig): Promise<T> {
+  async get<T>(url: string, config?: InternalAxiosRequestConfig, retryConfig?: RetryConfig): Promise<T> {
     try {
       // Development modda request loglama
       if (process.env.NODE_ENV === 'development') {
         console.log(`[API] GET ${url}`);
       }
 
-      const response = await this.client.get<ApiResponse<T>>(url, config);
+      const response = await this.retryRequest(
+        () => this.client.get<ApiResponse<T>>(url, config),
+        retryConfig
+      );
       
       // Development modda response loglama
       if (process.env.NODE_ENV === 'development') {
@@ -114,14 +214,17 @@ class ApiClient {
     }
   }
 
-  async post<T>(url: string, data?: unknown, config?: InternalAxiosRequestConfig): Promise<T> {
+  async post<T>(url: string, data?: unknown, config?: InternalAxiosRequestConfig, retryConfig?: RetryConfig): Promise<T> {
     try {
       // Development modda request loglama
       if (process.env.NODE_ENV === 'development') {
         console.log(`[API] POST ${url}`, data);
       }
 
-      const response = await this.client.post<ApiResponse<T>>(url, data, config);
+      const response = await this.retryRequest(
+        () => this.client.post<ApiResponse<T>>(url, data, config),
+        retryConfig
+      );
       
       // Development modda response loglama
       if (process.env.NODE_ENV === 'development') {
@@ -184,14 +287,17 @@ class ApiClient {
     }
   }
 
-  async put<T>(url: string, data?: unknown, config?: InternalAxiosRequestConfig): Promise<T> {
+  async put<T>(url: string, data?: unknown, config?: InternalAxiosRequestConfig, retryConfig?: RetryConfig): Promise<T> {
     try {
       // Development modda request loglama
       if (process.env.NODE_ENV === 'development') {
         console.log(`[API] PUT ${url}`, data);
       }
 
-      const response = await this.client.put<ApiResponse<T>>(url, data, config);
+      const response = await this.retryRequest(
+        () => this.client.put<ApiResponse<T>>(url, data, config),
+        retryConfig
+      );
       
       // Development modda response loglama
       if (process.env.NODE_ENV === 'development') {
@@ -231,14 +337,17 @@ class ApiClient {
     }
   }
 
-  async delete<T>(url: string, config?: InternalAxiosRequestConfig): Promise<T> {
+  async delete<T>(url: string, config?: InternalAxiosRequestConfig, retryConfig?: RetryConfig): Promise<T> {
     try {
       // Development modda request loglama
       if (process.env.NODE_ENV === 'development') {
         console.log(`[API] DELETE ${url}`);
       }
 
-      const response = await this.client.delete<ApiResponse<T>>(url, config);
+      const response = await this.retryRequest(
+        () => this.client.delete<ApiResponse<T>>(url, config),
+        retryConfig
+      );
       
       // Development modda response loglama
       if (process.env.NODE_ENV === 'development') {

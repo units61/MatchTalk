@@ -308,3 +308,5 @@ Sorularınız için issue açabilir veya iletişime geçebilirsiniz.
 ## 🙏 Teşekkürler
 
 MatchTalk projesine katkıda bulunan herkese teşekkürler!
+
+

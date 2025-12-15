@@ -5,3 +5,5 @@ export const getLeaderboardSchema = z.object({
 });
 
 export type GetLeaderboardInput = z.infer<typeof getLeaderboardSchema>;
+
+

@@ -27,7 +27,11 @@ const BottomNav: React.FC<BottomNavProps> = ({activeTab, onTabChange}) => {
             <Pressable
               key={tab.id}
               style={styles.tab}
-              onPress={() => onTabChange(tab.id)}>
+              onPress={() => onTabChange(tab.id)}
+              accessibilityRole="button"
+              accessibilityLabel={tab.label}
+              accessibilityState={{selected: isActive}}
+              accessibilityHint={`${tab.label} sekmesine geç`}>
               <View style={styles.tabContent}>
                 <Icon
                   name={tab.icon}

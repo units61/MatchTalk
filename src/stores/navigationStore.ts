@@ -37,6 +37,14 @@ const screenToUrl = (screen: ScreenName, params?: NavigationParams): string => {
       return '/matching';
     case 'invite':
       return params?.roomId ? `/invite/${params.roomId}` : '/home';
+    case 'notifications':
+      return '/notifications';
+    case 'editProfile':
+      return '/settings/edit-profile';
+    case 'changeEmail':
+      return '/settings/change-email';
+    case 'changePassword':
+      return '/settings/change-password';
     case 'login':
       return '/login';
     case 'register':
@@ -154,6 +162,8 @@ export const useNavigationStore = create<NavigationState>((set, get) => ({
     return stack[stack.length - 1]?.params;
   },
 }));
+
+
 
 
 

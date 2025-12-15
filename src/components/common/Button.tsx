@@ -49,6 +49,9 @@ export const Button: React.FC<Props> = ({
     <Pressable
       onPress={onPress}
       disabled={disabled}
+      accessibilityRole="button"
+      accessibilityLabel={title}
+      accessibilityState={{disabled: !!disabled}}
       style={({hovered, pressed}) => [
         styles.base,
         sizeStyles[size],

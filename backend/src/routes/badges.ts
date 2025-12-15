@@ -154,3 +154,5 @@ router.get('/leaderboard', async (req: AuthRequest, res: Response) => {
 });
 
 export const badgesRouter = router;
+
+

@@ -29,3 +29,5 @@ module.exports = {
   // End of line - lf, crlf, cr, auto
   endOfLine: 'lf',
 };
+
+

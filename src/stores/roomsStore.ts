@@ -6,6 +6,9 @@ interface RoomsState {
   rooms: Room[];
   currentRoom: Room | null;
   loading: boolean;
+  fetching: boolean; // Separate loading state for fetch operations
+  creating: boolean; // Separate loading state for create operations
+  joining: boolean; // Separate loading state for join operations
   error: string | null;
 
   // Actions
@@ -22,15 +25,19 @@ export const useRoomsStore = create<RoomsState>((set, get) => ({
   rooms: [],
   currentRoom: null,
   loading: false,
+  fetching: false,
+  creating: false,
+  joining: false,
   error: null,
 
   fetchRooms: async () => {
     try {
-      set({loading: true, error: null});
+      set({fetching: true, error: null});
       const rooms = await roomsApi.getRooms();
-      set({rooms, loading: false, error: null});
+      set({rooms, fetching: false, loading: false, error: null});
     } catch (error) {
       set({
+        fetching: false,
         loading: false,
         error: error instanceof Error ? error.message : 'Odalar yüklenemedi',
       });
@@ -39,7 +46,7 @@ export const useRoomsStore = create<RoomsState>((set, get) => ({
 
   createRoom: async (input: CreateRoomInput) => {
     try {
-      set({loading: true, error: null});
+      set({creating: true, loading: true, error: null});
       
       // Eğer kullanıcı zaten bir odadaysa, önce o odadan ayrıl
       const state = get();
@@ -64,6 +71,7 @@ export const useRoomsStore = create<RoomsState>((set, get) => ({
       set((state) => ({
         rooms: [room, ...state.rooms],
         currentRoom: room,
+        creating: false,
         loading: false,
         error: null,
       }));
@@ -71,6 +79,7 @@ export const useRoomsStore = create<RoomsState>((set, get) => ({
       return room;
     } catch (error) {
       set({
+        creating: false,
         loading: false,
         error: error instanceof Error ? error.message : 'Oda oluşturulamadı',
       });
@@ -81,16 +90,18 @@ export const useRoomsStore = create<RoomsState>((set, get) => ({
 
   joinRoom: async (roomId: string) => {
     try {
-      set({loading: true, error: null});
+      set({joining: true, loading: true, error: null});
       const room = await roomsApi.joinRoom(roomId);
       set((state) => ({
         rooms: state.rooms.map((r) => (r.id === roomId ? room : r)),
         currentRoom: room,
+        joining: false,
         loading: false,
         error: null,
       }));
     } catch (error) {
       set({
+        joining: false,
         loading: false,
         error: error instanceof Error ? error.message : 'Odaya katılamadı',
       });

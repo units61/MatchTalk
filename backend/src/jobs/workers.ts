@@ -38,3 +38,5 @@ export async function closeWorkers(): Promise<void> {
   workers = [];
   logger.info('All workers closed');
 }
+
+

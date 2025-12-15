@@ -18,10 +18,13 @@ const FAB: React.FC<FABProps> = ({onPress, label = 'Yeni Odaya Katıl'}) => {
 
   return (
     <View style={styles.container}>
-      <Pressable 
-        style={styles.button} 
+      <Pressable
+        style={styles.button}
         onPress={handlePress}
-        hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
+        hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}
+        accessibilityRole="button"
+        accessibilityLabel={label}
+        accessibilityHint="Yeni bir sohbet odası oluşturmak için tıklayın">
         <Icon name="add_circle" style={styles.icon} />
         <Text style={styles.label}>{label}</Text>
       </Pressable>

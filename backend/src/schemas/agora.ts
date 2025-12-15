@@ -7,3 +7,5 @@ export const generateTokenSchema = z.object({
 });
 
 export type GenerateTokenInput = z.infer<typeof generateTokenSchema>;
+
+

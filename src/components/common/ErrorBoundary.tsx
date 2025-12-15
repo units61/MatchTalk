@@ -6,6 +6,8 @@ import {colors} from '../../theme/colors';
 import {spacing} from '../../theme/spacing';
 import {typography} from '../../theme/typography';
 import {radius} from '../../theme/radius';
+import {logError, ErrorContext} from '../../utils/errorHandler';
+import {captureException} from '../../utils/errorTracking';
 
 interface Props {
   children: ReactNode;
@@ -40,6 +42,23 @@ class ErrorBoundary extends Component<Props, State> {
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     // Log error to console
     console.error('ErrorBoundary caught an error:', error, errorInfo);
+    
+    // Log error using error handler utility
+    const context: ErrorContext = {
+      component: errorInfo.componentStack?.split('\n')[1]?.trim() || 'Unknown',
+      action: 'component_render',
+    };
+    
+    logError({
+      message: error.message,
+      originalError: error,
+      severity: 'high',
+      context,
+      timestamp: new Date(),
+    });
+
+    // Capture exception for error tracking
+    captureException(error, context, 'high');
     
     // Call onError callback if provided
     this.props.onError?.(error, errorInfo);
@@ -173,6 +192,8 @@ const styles = StyleSheet.create({
 });
 
 export default ErrorBoundary;
+
+
 
 
 

@@ -72,3 +72,5 @@ router.post('/token', async (req: AuthRequest, res: Response) => {
 });
 
 export const agoraRouter = router;
+
+

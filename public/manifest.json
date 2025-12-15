@@ -1,0 +1,33 @@
+{
+  "short_name": "MatchTalk",
+  "name": "MatchTalk - Zamanlı Sohbet Uygulaması",
+  "description": "Zamanlı sohbet odalarında yeni insanlarla tanışın",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#6467f2",
+  "background_color": "#f6f6f8",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "categories": ["social", "communication"],
+  "lang": "tr"
+}
+

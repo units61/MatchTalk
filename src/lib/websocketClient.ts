@@ -1,11 +1,15 @@
 import {io, Socket} from 'socket.io-client';
 import {apiClient} from './apiClient';
 import {config} from './config';
+import {WEBSOCKET_CONFIG} from '../constants/app';
 
 class WebSocketClient {
   private socket: Socket | null = null;
   private reconnectAttempts = 0;
-  private maxReconnectAttempts = 5;
+  private maxReconnectAttempts = WEBSOCKET_CONFIG.MAX_RECONNECT_ATTEMPTS;
+  private reconnectDelay = WEBSOCKET_CONFIG.RECONNECT_DELAY;
+  private maxReconnectDelay = WEBSOCKET_CONFIG.MAX_RECONNECT_DELAY;
+  private reconnectTimer: NodeJS.Timeout | null = null;
 
   async connect(): Promise<Socket> {
     if (this.socket?.connected) {
@@ -33,9 +37,12 @@ class WebSocketClient {
       },
       transports: ['websocket', 'polling'],
       reconnection: true,
-      reconnectionDelay: 1000,
+      reconnectionDelay: this.reconnectDelay,
+      reconnectionDelayMax: this.maxReconnectDelay,
       reconnectionAttempts: this.maxReconnectAttempts,
-      timeout: 20000, // 20 second connection timeout
+      timeout: WEBSOCKET_CONFIG.CONNECTION_TIMEOUT,
+      // Exponential backoff configuration
+      randomizationFactor: 0.5, // Add randomness to prevent thundering herd
     });
 
     // Wait for connection with timeout
@@ -50,9 +57,9 @@ class WebSocketClient {
             this.socket.off('connect', connectHandler);
             this.socket.off('connect_error', errorHandler);
           }
-          reject(new Error('WebSocket connection timeout'));
+          reject(new Error(`WebSocket connection timeout after ${WEBSOCKET_CONFIG.CONNECTION_TIMEOUT / 1000} seconds`));
         }
-      }, 15000); // 15 second timeout
+      }, WEBSOCKET_CONFIG.CONNECTION_TIMEOUT * 0.75); // 75% of connection timeout
 
       const connectHandler = () => {
         if (!resolved) {
@@ -100,15 +107,76 @@ class WebSocketClient {
 
       this.socket!.on('disconnect', (reason) => {
         console.log('[WebSocket] Disconnected:', reason);
+        // Handle reconnection with exponential backoff
+        if (reason === 'io server disconnect' || reason === 'transport close') {
+          // Server closed connection or transport error - attempt reconnection
+          this.scheduleReconnect();
+        }
+      });
+
+      this.socket!.on('reconnect_attempt', (attemptNumber) => {
+        console.log(`[WebSocket] Reconnection attempt ${attemptNumber}`);
+        this.reconnectAttempts = attemptNumber;
+      });
+
+      this.socket!.on('reconnect', (attemptNumber) => {
+        console.log(`[WebSocket] Reconnected after ${attemptNumber} attempts`);
+        this.reconnectAttempts = 0;
+        this.reconnectDelay = WEBSOCKET_CONFIG.RECONNECT_DELAY; // Reset delay on successful reconnect
+      });
+
+      this.socket!.on('reconnect_failed', () => {
+        console.error('[WebSocket] Reconnection failed after all attempts');
+        this.reconnectAttempts = 0;
+        this.reconnectDelay = WEBSOCKET_CONFIG.RECONNECT_DELAY; // Reset delay
       });
     });
   }
 
   disconnect() {
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
     if (this.socket) {
       this.socket.disconnect();
       this.socket = null;
     }
+    this.reconnectAttempts = 0;
+    this.reconnectDelay = WEBSOCKET_CONFIG.RECONNECT_DELAY;
+  }
+
+  /**
+   * Schedule reconnection with exponential backoff
+   */
+  private scheduleReconnect(): void {
+    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+      console.error('[WebSocket] Max reconnection attempts reached');
+      return;
+    }
+
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+    }
+
+    // Calculate delay with exponential backoff
+    const delay = Math.min(
+      this.reconnectDelay * Math.pow(2, this.reconnectAttempts),
+      this.maxReconnectDelay
+    );
+
+    console.log(`[WebSocket] Scheduling reconnection in ${delay}ms (attempt ${this.reconnectAttempts + 1})`);
+
+    this.reconnectTimer = setTimeout(() => {
+      this.reconnectAttempts++;
+      this.connect().catch((error) => {
+        console.error('[WebSocket] Reconnection attempt failed:', error);
+        // Schedule next attempt
+        if (this.reconnectAttempts < this.maxReconnectAttempts) {
+          this.scheduleReconnect();
+        }
+      });
+    }, delay);
   }
 
   getSocket(): Socket | null {
